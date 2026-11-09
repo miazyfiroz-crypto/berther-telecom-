@@ -140,6 +140,7 @@ body.rose .modebar button.on{background:#D92B33}
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script>
   firebase.initializeApp({
     apiKey: "AIzaSyAKTRy6I6wvKKlR96DfHPN7HXbxWcWFD2Q",
@@ -201,23 +202,47 @@ const S={
 /* ---------- shared database (wallet + requests) ---------- */
 let DB=null;
 function log(act){S.audit.unshift({t:"এইমাত্র",who:S.auth.user||"admin",act})}
+let AUTH=null, SUBS=[];
+function pinPassword(p){return "bt-"+p+"-brothers"}
+function stopSubs(){
+  SUBS.forEach(u=>{ try{ u() }catch(e){} });
+  SUBS=[]; S.users=[]; S.tx=[]; S.wallets={}; S.balance=0; S.myProfile=null; S.isAdmin=false;
+}
+async function isAdminEmail(email){
+  try{ const d=await DB.doc("admins/"+email).get(); return d.exists; }catch(e){ return false }
+}
+async function startSubs(u){
+  stopSubs();
+  const uid=u.uid; S.me=uid;
+  const admin=await isAdminEmail(u.email||"");
+  if(S.me!==uid) return;
+  S.isAdmin=admin;
+  const fail=()=>{ S.dbNote="ডেটা সংযোগে সমস্যা"; render(); };
+  SUBS.push(DB.doc("settings/main").onSnapshot(s=>{ if(s.exists) S.settings=Object.assign({},DEF_SETTINGS,s.data()); render(); },()=>{}));
+  SUBS.push(DB.collection("hisab").onSnapshot(q=>{ S.hisab=q.docs.map(d=>Object.assign({id:d.id},d.data())); S.customers=allCust().map(c=>c.name); render(); },()=>{}));
+  SUBS.push(DB.collection("customers").onSnapshot(q=>{ S.custObjs=q.docs.map(d=>Object.assign({id:d.id},d.data())); S.customers=allCust().map(c=>c.name); render(); },()=>{}));
+  SUBS.push(DB.doc("wallets/"+uid).onSnapshot(s=>{ if(!admin){ S.balance=s.exists?(s.data().balance||0):0; S.dbNote=""; render(); } },fail));
+  SUBS.push(DB.doc("users/"+uid).onSnapshot(s=>{ S.myProfile=s.exists?s.data():null; render(); },()=>{}));
+  if(admin){
+    SUBS.push(DB.collection("wallets").onSnapshot(q=>{ S.wallets={}; q.docs.forEach(d=>{ S.wallets[d.id]=(d.data().balance||0); }); S.balance=S.wallets[uid]||0; render(); },fail));
+    SUBS.push(DB.collection("users").onSnapshot(q=>{ S.users=q.docs.map(d=>Object.assign({id:d.id},d.data())); render(); },()=>{}));
+    SUBS.push(DB.collection("wallet_tx").onSnapshot(q=>{ S.tx=q.docs.map(d=>Object.assign({id:d.id},d.data())); render(); },fail));
+  } else {
+    SUBS.push(DB.collection("wallet_tx").where("uid","==",uid).onSnapshot(q=>{ S.tx=q.docs.map(d=>Object.assign({id:d.id},d.data())); render(); },fail));
+  }
+}
 async function boot(){
   try{ if(window.claude) DB=await window.claude.use("db"); }catch(e){ DB=null; }
-  if(!DB){ S.dbNote="শেয়ার্ড ডেটাবেস এখন চালু নেই, ওয়ালেট দেখানো যাচ্ছে না।"; render(); return; }
-  try{
-    const w=await DB.doc("wallet/main").get();
-    if(!w.exists) await DB.doc("wallet/main").set({balance:5000});
-  }catch(e){ console.warn(e); }
-  await seedSettings();
-  // ইউজার রেজিস্ট্রেশন এখন লগইন স্ক্রিনে হয়
-  DB.doc("settings/main").onSnapshot(s=>{ if(s.exists) S.settings=Object.assign({},DEF_SETTINGS,s.data()); render(); },()=>{});
-  DB.collection("users").onSnapshot(q=>{ S.users=q.docs.map(d=>Object.assign({id:d.id},d.data())); render(); },()=>{});
-  DB.collection("hisab").onSnapshot(q=>{ S.hisab=q.docs.map(d=>Object.assign({id:d.id},d.data())); S.customers=allCust().map(c=>c.name); render(); },()=>{});
-  DB.collection("customers").onSnapshot(q=>{ S.custObjs=q.docs.map(d=>Object.assign({id:d.id},d.data())); S.customers=allCust().map(c=>c.name); render(); },()=>{});
-  try{ const hs=await DB.collection("hisab").get(); if(hs.empty){ for(const r of SEED_HISAB) await DB.doc("hisab/"+r.id).set(r); } }catch(e){ console.warn(e); }
-  DB.collection("wallets").onSnapshot(q=>{ S.wallets={}; q.docs.forEach(d=>{ S.wallets[d.id]=(d.data().balance||0); }); S.balance=S.wallets[S.me]||0; S.dbNote=""; render(); },()=>{ S.dbNote="ডেটা সংযোগে সমস্যা"; render(); });
-  DB.collection("wallet_tx").onSnapshot(q=>{ S.tx=q.docs.map(d=>Object.assign({id:d.id},d.data())); render(); },()=>{ S.dbNote="ডেটা সংযোগে সমস্যা"; render(); });
+  if(!DB){ S.dbNote="শেয়ার্ড ডেটাবেস এখন চালু নেই।"; render(); return; }
+  AUTH=firebase.auth();
+  AUTH.onAuthStateChanged(u=>{
+    if(u){ S.pinOk=true; startSubs(u); }
+    else { S.me=""; S.pinOk=false; stopSubs(); }
+    render();
+  });
+  render();
 }
+function logout(){ if(AUTH) AUTH.signOut(); }
 const DEF_SETTINGS={features:{wallet:true,transfer:true,recharge:true,bill:true},limits:{daily:50000,perTx:10000},maintenance:false,shopName:"",notice:{text:"",at:""}};
 async function seedSettings(){ try{ const s=await DB.doc("settings/main").get(); if(!s.exists) await DB.doc("settings/main").set(DEF_SETTINGS); }catch(e){ console.warn(e); } }
 async function registerMe(){
@@ -245,7 +270,7 @@ function gateCheck(type,amount,direct){
   return "";
 }
 function fullMsg(t,s){return `<div class="lock"><div style="font-size:44px">🔒</div><h2 style="font-size:19px;margin:10px 0 4px">${t}</h2><div class="muted">${s}</div></div>`}
-function isBlocked(){const u=S.users.find(x=>x.id===S.me);return !!(u&&u.blocked)}
+function isBlocked(){const u=S.users.find(x=>x.id===S.me)||S.myProfile;return !!(u&&u.blocked)}
 function noPerm(){alert("এই কাজের অনুমতি নেই")}
 let toastTimer=null;
 function toast(m){S.toast=m;render();clearTimeout(toastTimer);toastTimer=setTimeout(()=>{S.toast="";render()},3000)}
@@ -342,34 +367,38 @@ function hashPin(p){let h=5381;for(const c of String(p))h=((h<<5)+h+c.charCodeAt
 function enter(id,name){S.me=id;S.balance=(S.wallets||{})[id]||0;S.myName=name;S.pinOk=true;S.authDraft={};S.authErr="";S.tab="home";render()}
 async function doRegister(){
   const d=S.authDraft||{};
-  if(!needDb())return;
+  if(!AUTH) return setErr("ডেটাবেস চালু নেই");
   if(!d.name||!d.name.trim())return setErr("নাম লিখুন");
   if(!validPhone(d.phone||""))return setErr("সঠিক মোবাইল নম্বর দিন (01XXXXXXXXX)");
   if(!validPin(d.pin||""))return setErr("PIN ৪ সংখ্যার হতে হবে");
   if(d.pin!==d.pin2)return setErr("PIN দুটি মিলছে না");
-  const id="u"+d.phone;
   try{
-    const ex=await DB.doc("users/"+id).get();
-    if(ex.exists)return setErr("এই নম্বরে আগেই রেজিস্ট্রেশন করা হয়েছে");
-    const now=new Date().toISOString();
-    await DB.doc("users/"+id).set({name:d.name.trim(),phone:d.phone,pinHash:hashPin(d.pin),blocked:false,lastSeen:now,createdAt:now});
-    enter(id,d.name.trim());
-  }catch(e){ setErr("রেজিস্ট্রেশন হয়নি, আবার চেষ্টা করুন"); }
+    const cred=await AUTH.createUserWithEmailAndPassword(d.phone+"@brothers.app", pinPassword(d.pin));
+    const uid=cred.user.uid, now=new Date().toISOString();
+    await DB.doc("users/"+uid).set({name:d.name.trim(),phone:d.phone,blocked:false,lastSeen:now,createdAt:now});
+    enter(uid,d.name.trim());
+  }catch(e){
+    setErr(e.code==="auth/email-already-in-use"?"এই নম্বরে আগেই রেজিস্ট্রেশন করা হয়েছে":"রেজিস্ট্রেশন হয়নি, আবার চেষ্টা করুন");
+  }
 }
 async function doLogin(){
   const d=S.authDraft||{};
-  if(!needDb())return;
+  if(!AUTH) return setErr("ডেটাবেস চালু নেই");
   if(!validPhone(d.phone||""))return setErr("সঠিক মোবাইল নম্বর দিন");
-  const id="u"+d.phone;
+  if(!validPin(d.pin||""))return setErr("PIN ৪ সংখ্যার হতে হবে");
   try{
-    const ex=await DB.doc("users/"+id).get();
-    if(!ex.exists)return setErr("এই নম্বরে রেজিস্ট্রেশন নেই");
-    const u=ex.data();
-    if(u.pinHash!==hashPin(d.pin||""))return setErr("PIN ভুল হয়েছে");
-    if(u.blocked)return setErr("এই অ্যাকাউন্ট বন্ধ আছে");
-    await DB.doc("users/"+id).update({lastSeen:new Date().toISOString()});
-    enter(id,u.name);
-  }catch(e){ setErr("লগইন হয়নি, আবার চেষ্টা করুন"); }
+    const cred=await AUTH.signInWithEmailAndPassword(d.phone+"@brothers.app", pinPassword(d.pin));
+    const uid=cred.user.uid;
+    const ex=await DB.doc("users/"+uid).get();
+    const u=ex.exists?ex.data():{name:"ব্যবহারকারী",blocked:false};
+    if(u.blocked){ await AUTH.signOut(); return setErr("এই অ্যাকাউন্ট বন্ধ আছে"); }
+    await DB.doc("users/"+uid).update({lastSeen:new Date().toISOString()}).catch(()=>{});
+    enter(uid,u.name);
+  }catch(e){
+    setErr(["auth/wrong-password","auth/user-not-found","auth/invalid-credential"].includes(e.code)
+      ?"নম্বর বা PIN ভুল, অথবা রেজিস্ট্রেশন নেই"
+      :"লগইন হয়নি, আবার চেষ্টা করুন");
+  }
 }
 function bal(uid){return (S.wallets||{})[uid]||0}
 function nowText(){return new Date().toLocaleString("bn-BD",{timeZone:"Asia/Dhaka",weekday:"long",year:"numeric",month:"long",day:"numeric",hour:"2-digit",minute:"2-digit",second:"2-digit"})}
@@ -604,16 +633,14 @@ async function buyDrive(o){
 }
 function pinCard(){return `<div class="card"><div class="t" style="margin-bottom:6px">PIN পরিবর্তন</div><label>বর্তমান PIN</label><input type="password" inputmode="numeric" maxlength="4" value="${esc(S.pinOld||"")}" oninput="S.pinOld=this.value"><label>নতুন PIN (৪ সংখ্যা)</label><input type="password" inputmode="numeric" maxlength="4" value="${esc(S.pinNew||"")}" oninput="S.pinNew=this.value"><button class="btn" style="margin-top:10px" onclick="changePin()">PIN বদলান</button></div>`}
 async function changePin(){
-  if(!needDb())return;
+  if(!AUTH||!AUTH.currentUser) return alert("আগে লগইন করুন");
   if(!validPin(S.pinNew||""))return alert("নতুন PIN ৪ সংখ্যার হতে হবে");
   try{
-    const ref=DB.doc("users/"+S.me);
-    const ex=await ref.get();
-    if(!ex.exists)return alert("ব্যবহারকারী পাওয়া যায়নি");
-    if(ex.data().pinHash!==hashPin(S.pinOld||""))return alert("বর্তমান PIN ভুল");
-    await ref.update({pinHash:hashPin(S.pinNew)});
+    const u=AUTH.currentUser;
+    await u.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(u.email, pinPassword(S.pinOld||"")));
+    await u.updatePassword(pinPassword(S.pinNew));
     S.pinOld=""; S.pinNew=""; toast("PIN বদলানো হয়েছে");
-  }catch(e){ alert("PIN বদলানো যায়নি") }
+  }catch(e){ alert("বর্তমান PIN ভুল, অথবা PIN বদলানো যায়নি"); }
 }
 function needDb(){ if(!DB){ alert("শেয়ার্ড ডেটাবেস সংযুক্ত নয়"); return false } return true }
 function sortedTx(){ return S.tx.slice().sort((a,b)=>a.id<b.id?1:-1) }
@@ -733,7 +760,7 @@ const TABS={
     </div>
     <div class="card"><div class="t">দোকানের নাম</div><input value="${esc(S.shop)}" onchange="S.shop=this.value||S.shop;render()" style="margin-top:8px"></div>
     <div class="card"><div class="t" style="margin-bottom:6px">কাস্টমার (${S.customers.length})</div>${S.customers.map(c=>`<div class="row"><div class="t">${esc(c)}</div></div>`).join("")}</div>
-    <button class="btn g" onclick="S.me='';S.pinOk=false;S.tab='home';render()">লগ আউট</button>
+    <button class="btn g" onclick="logout()">লগ আউট</button>
     <div class="note">ডেমো: দোকানের হিসাব এই ব্রাউজারে থাকে। ওয়ালেট ও রিকুয়েস্ট শেয়ার্ড, এডমিন প্যানেলে সরাসরি দেখা যায়।</div>`
 };
 function lockView(){
@@ -839,13 +866,19 @@ function loginAdmin(){
     <label>পাসওয়ার্ড</label><input type="password" value="${esc(S.auth.pass)}" oninput="S.auth.pass=this.value">
     <div class="err">${S.auth.err}</div><button class="btn" onclick="aLogin()">লগইন</button></div></div>`;
 }
-function aLogin(){
-  const u=USERS[S.auth.user];
-  if(u&&u.pass===S.auth.pass){ S.auth={user:S.auth.user,pass:"",err:"",ok:true,role:u.role,name:u.name}; log("লগইন করেছেন"); }
-  else S.auth.err="ইউজারনেম বা পাসওয়ার্ড ভুল";
+async function aLogin(){
+  const email=(S.auth.user||"").trim(), pass=S.auth.pass||"";
+  if(!AUTH){ S.auth.err="ডেটাবেস চালু নেই"; return render(); }
+  try{
+    await AUTH.signInWithEmailAndPassword(email, pass);
+    const ok=await isAdminEmail(email);
+    if(!ok){ await AUTH.signOut(); S.auth.err="এই অ্যাকাউন্টে এডমিন অনুমতি নেই"; return render(); }
+    S.auth={user:email,pass:"",err:"",ok:true,role:"super",name:email};
+    log("লগইন করেছেন");
+  }catch(e){ S.auth.err="ইমেইল বা পাসওয়ার্ড ভুল"; }
   render();
 }
-function aLogout(){S.auth={user:"",pass:"",err:"",ok:false,role:"",name:""};render()}
+function aLogout(){S.auth={user:"",pass:"",err:"",ok:false,role:"",name:""};if(AUTH)AUTH.signOut();render()}
 function aGo(p){S.apage=p;S.afilter="all";S.asearch="";render()}
 function adminPage(){
   return ({dash:dashPage,req:reqPage,users:()=>S.udetail?userDetail():usersPage(),notice:noticePage,settings:settingsPage,tx:txPage,rep:repPage,audit:auditPage})[S.apage]();
