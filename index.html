@@ -142,7 +142,7 @@ body.rose .modebar button.on{background:#D92B33}
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script>
-  firebase.initializeApp({
+  if(window.firebase) firebase.initializeApp({
     apiKey: "AIzaSyAKTRy6I6wvKKlR96DfHPN7HXbxWcWFD2Q",
     authDomain: "berther-telecom-a81ec.firebaseapp.com",
     projectId: "berther-telecom-a81ec",
@@ -172,7 +172,7 @@ const nid=()=>"T"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const TXT={drive:"ড্রাইভ",sale:"বিক্রি",expense:"খরচ",due:"বাকি বিক্রি",collect:"বাকি আদায়",send:"ট্রান্সফার",recharge:"মোবাইল রিচার্জ",bill:"বিল পেমেন্ট",add:"অ্যাড মানি",withdraw:"উইথড্র"};
 const ST={pending:["অপেক্ষমাণ","p-wait"],approved:["অনুমোদিত","p-ok"],rejected:["বাতিল","p-no"],done:["সম্পন্ন","p-ok"]};
 const USERS={firoz:{pass:"6920",role:"super",name:"firoz"},admin:{pass:"1234",role:"super",name:"সুপার এডমিন"},viewer:{pass:"1234",role:"viewer",name:"দেখার অনুমতি"}};
-const TITLES={sales:"বিক্রি ও খরচ",dues:"বাকি হিসাব",wallet:"মোবাইল ওয়ালেট",report:"রিপোর্ট",settings:"সেটিংস"};
+const TITLES={profile:"আমার প্রোফাইল",sales:"বিক্রি ও খরচ",dues:"বাকি হিসাব",wallet:"মোবাইল ওয়ালেট",report:"রিপোর্ট",settings:"সেটিংস"};
 const APAGES=[["dash","📊","ড্যাশবোর্ড"],["req","👛","ওয়ালেট রিকুয়েস্ট"],["users","👥","সকল ইউজার"],["notice","📢","নোটিশ"],["settings","⚙️","সেটিংস ও কন্ট্রোল"],["tx","🧾","সব লেনদেন"],["rep","📥","রিপোর্ট"],["audit","📜","অডিট লগ"]];
 
 const S={
@@ -254,7 +254,8 @@ function allPayInfo(){
 function profileCard(){
   const p=S.myProfile||{};
   const name=p.name||"ব্যবহারকারী";
-  return `<div class="card" style="display:flex;align-items:center;gap:12px"><div class="avatar" style="width:52px;height:52px;font-size:22px">${esc(name.charAt(0)||"?")}</div><div style="flex:1"><div class="t" style="font-size:16px">${esc(name)}</div><div class="s">মোবাইল: ${esc(p.phone||"—")}</div></div><button class="btn sm g" onclick="S.tab='settings';render()">প্রোফাইল</button></div>`;
+  const av=p.photo?`<img src="${esc(p.photo)}" alt="" style="width:52px;height:52px;border-radius:50%;object-fit:cover">`:`<div class="avatar" style="width:52px;height:52px;font-size:22px">${esc(name.charAt(0)||"?")}</div>`;
+  return `<div class="card" style="display:flex;align-items:center;gap:12px">${av}<div style="flex:1"><div class="t" style="font-size:16px">${esc(name)}</div><div class="s">মোবাইল: ${esc(p.phone||"—")}</div></div><button class="btn sm g" onclick="S.tab='profile';render()">প্রোফাইল</button></div>`;
 }
 function profileEditCard(){
   const p=S.myProfile||{};
@@ -266,6 +267,74 @@ async function saveMyName(v){
   if(!DB||!S.me)return;
   try{ await DB.doc("users/"+S.me).update({name:n}); toast("নাম বদলানো হয়েছে"); }
   catch(e){ alert("নাম বদলানো হয়নি"); }
+}
+function dailySaleVal(){ return (S.settings.daily||{}).sale||0 }
+function dailyExpVal(){ return (S.settings.daily||{}).exp||0 }
+function dailyCard(){
+  const d=S.settings.daily||{};
+  return `<div class="card"><div class="t" style="margin-bottom:6px">আজকের বিক্রি ও খরচ (এডিট)</div><div class="s">ইউজার অ্যাপে দেখাবে না, শুধু এডমিন ড্যাশবোর্ডে দেখাবে।</div><label>আজকের বিক্রি (৳)</label><input id="dy-sale" type="number" value="${d.sale||0}"><label>আজকের খরচ (৳)</label><input id="dy-exp" type="number" value="${d.exp||0}"><button class="btn" style="margin-top:10px" onclick="saveDaily()">সেভ করুন</button></div>`;
+}
+function saveDaily(){
+  saveSettings({daily:{sale:+(document.getElementById("dy-sale").value||0),exp:+(document.getElementById("dy-exp").value||0),date:today(0)}});
+}
+let AD_IMG="";
+function adsCard(){
+  const ads=S.settings.ads||[];
+  const rows=ads.map(a=>`<div class="row"><div style="display:flex;gap:10px;align-items:center"><img src="${esc(a.img)}" alt="" style="width:60px;height:40px;object-fit:cover;border-radius:6px"><div><div class="t">${esc(a.text||"বিজ্ঞাপন")}</div><div class="s">${esc(a.link||"")}</div></div></div><button class="btn sm g" onclick="removeAd('${esc(a.id)}')">মুছুন</button></div>`).join("")||'<div class="muted">কোনো বিজ্ঞাপন নেই</div>';
+  return `<div class="card"><div class="t" style="margin-bottom:6px">লাইভ বিজ্ঞাপন (ইউজার হোমে দেখাবে)</div>${rows}
+    <label>বিজ্ঞাপনের লেখা</label><input id="ad-text" placeholder="যেমন: নতুন অফার">
+    <label>ক্লিক করলে যাবে (ঐচ্ছিক)</label><input id="ad-link" placeholder="https://...">
+    <label>ছবি (ফাইল)</label><input type="file" accept="image/*" onchange="adFileChosen(this)">
+    <label>অথবা ছবির লিংক</label><input id="ad-img-url" placeholder="https://...jpg">
+    <button class="btn" style="margin-top:10px" onclick="addAd()">বিজ্ঞাপন যোগ করুন</button></div>`;
+}
+async function adFileChosen(input){
+  const f=input.files&&input.files[0]; if(!f)return;
+  try{ AD_IMG=await fileToDataUrl(f,600,0.7); toast("ছবি প্রস্তুত, এখন যোগ করুন"); }
+  catch(e){ alert("ছবি পড়া যায়নি"); }
+}
+function addAd(){
+  const text=(document.getElementById("ad-text").value||"").trim();
+  const link=(document.getElementById("ad-link").value||"").trim();
+  const img=(document.getElementById("ad-img-url").value||"").trim()||AD_IMG;
+  if(!img)return alert("ছবি বাছাই করুন অথবা ছবির লিংক দিন");
+  if(link&&!/^https?:\/\//.test(link))return alert("লিংক https:// দিয়ে শুরু হতে হবে");
+  const list=[...(S.settings.ads||[]),{id:nid(),text,link,img}];
+  AD_IMG="";
+  saveSettings({ads:list});
+}
+function removeAd(id){ saveSettings({ads:(S.settings.ads||[]).filter(a=>a.id!==id)}); }
+function adsBanner(){
+  const ads=S.settings.ads||[];
+  if(!ads.length)return "";
+  return `<div style="display:flex;gap:10px;overflow-x:auto;margin-bottom:12px;padding-bottom:4px">${ads.map(a=>`<a href="${esc(a.link||'#')}" target="_blank" rel="noopener" style="flex:0 0 85%;text-decoration:none;color:#000;background:#fff;border-radius:14px;overflow:hidden;border:1px solid var(--line)"><img src="${esc(a.img)}" alt="" style="width:100%;height:150px;object-fit:cover;display:block"><div style="padding:8px 10px;font-size:13px;font-weight:600">${esc(a.text||"")}</div></a>`).join("")}</div>`;
+}
+function profilePage(){
+  const p=S.myProfile||{};
+  const E=!!S.profEdit;
+  const av=p.photo?`<img src="${esc(p.photo)}" alt="" style="width:110px;height:110px;border-radius:50%;object-fit:cover;border:3px solid #4A4AE0">`:`<div class="avatar" style="width:110px;height:110px;font-size:44px;margin:0 auto">${esc((p.name||"?").charAt(0))}</div>`;
+  const row=(label,val)=>`<div class="card" style="margin-bottom:8px;padding:12px 14px"><div class="s">${label}</div><div class="t" style="font-size:16px">${esc(val||"—")}</div></div>`;
+  const inp=(label,id,val,type)=>`<label>${label}</label><input id="${id}" type="${type||"text"}" value="${esc(val||"")}">`;
+  const gender=`<label>লিঙ্গ</label><select id="pf-gender">${["পুরুষ","মহিলা","অন্যান্য"].map(o=>`<option ${o===(p.gender||"")?"selected":""}>${o}</option>`).join("")}</select>`;
+  const body=E
+    ? `<div class="card">${inp("আবেদনকারীর নাম","pf-name",p.name)}${inp("ইমেইল","pf-email",p.email,"email")}${gender}${inp("জন্মতারিখ","pf-dob",p.dob,"date")}${inp("বিভাগ / জেলা","pf-dept",p.dept)}<button class="btn" style="margin-top:12px" onclick="saveProfile()">সেভ করুন</button></div>`
+    : `${row("মোবাইল নাম্বার",p.phone)}${row("প্যাকেজ সাবস্ক্রাইবার",p.pkg||"Basic")}${row("আবেদনকারীর নাম",p.name)}${row("ইমেইল",p.email)}${row("লিঙ্গ",p.gender)}${row("জন্মতারিখ",p.dob)}${row("বিভাগ / জেলা",p.dept)}`;
+  return `<div class="btns"><button class="btn sm g" onclick="S.tab='home';render()">← ফিরে যান</button><button class="btn sm" onclick="S.profEdit=!S.profEdit;render()">${E?"বাতিল":"সম্পাদনা"}</button></div>
+    <div style="text-align:center;margin-bottom:14px">${av}${E?`<div style="margin-top:8px"><input type="file" accept="image/*" onchange="profPhotoChosen(this)"></div>`:""}</div>
+    ${body}`;
+}
+async function saveProfile(){
+  if(!DB||!S.me)return;
+  const g=id=>{const el=document.getElementById(id);return el?el.value.trim():""};
+  const cur=S.myProfile||{};
+  const data={name:g("pf-name")||cur.name||"",email:g("pf-email"),gender:g("pf-gender"),dob:g("pf-dob"),dept:g("pf-dept")};
+  try{ await DB.doc("users/"+S.me).update(data); S.profEdit=false; toast("প্রোফাইল সেভ হয়েছে"); }
+  catch(e){ alert("প্রোফাইল সেভ হয়নি"); }
+}
+async function profPhotoChosen(input){
+  const f=input.files&&input.files[0]; if(!f)return;
+  try{ const url=await fileToDataUrl(f,300,0.8); await DB.doc("users/"+S.me).update({photo:url}); toast("ছবি যুক্ত হয়েছে"); }
+  catch(e){ alert("ছবি যুক্ত হয়নি"); }
 }
 function logout(){ if(AUTH) AUTH.signOut(); }
 const DEF_SETTINGS={features:{wallet:true,transfer:true,recharge:true,bill:true},limits:{daily:50000,perTx:10000},maintenance:false,shopName:"",notice:{text:"",at:""}};
@@ -376,8 +445,8 @@ function hisabCardHtml(){
   return `<div class="cards">
     <div class="card stat"><small>দোকানের নগদ (ক্যাশ)</small><b>${taka(t.cash)}</b></div>
     <div class="card stat"><small>মোট বাকি পাওনা</small><b>${taka(t.due)}</b></div>
-    <div class="card stat"><small>আজকের বিক্রি</small><b>${taka(t.sale)}</b></div>
-    <div class="card stat"><small>আজকের খরচ</small><b>${taka(t.exp)}</b></div>
+    <div class="card stat"><small>আজকের বিক্রি</small><b>${taka(dailySaleVal())}</b></div>
+    <div class="card stat"><small>আজকের খরচ</small><b>${taka(dailyExpVal())}</b></div>
   </div>
   <div class="card"><div class="t" style="margin-bottom:6px">বাকি তালিকা (শীর্ষ ৫)</div>${rows}</div>`;
 }
@@ -762,11 +831,10 @@ function walletIcons(){
   </div>`;
 }
 const TABS={
-  home:()=>{const t=hisabTotals();return `${profileCard()}${clockCard()}
+  profile:()=>profilePage(),
+  home:()=>{const t=hisabTotals();return `${profileCard()}${adsBanner()}${clockCard()}
     <div class="card hero"><small>ওয়ালেট ব্যালেন্স</small><b>${taka(S.balance)}</b></div>
     <div class="mini4">
-      <div class="card stat"><small>আজকের বিক্রি</small><b>${taka(t.sale)}</b></div>
-      <div class="card stat"><small>আজকের খরচ</small><b>${taka(t.exp)}</b></div>
       <div class="card stat"><small>ক্যাশ ব্যালেন্স</small><b>${taka(t.cash)}</b></div>
       <div class="card stat"><small>মোট বাকি</small><b>${taka(t.due)}</b></div>
     </div>
@@ -1006,7 +1074,7 @@ function usersPage(){
 function noticePage(){
   const n=S.settings.notice||{};
   return `<div class="card"><div class="t" style="margin-bottom:6px">বর্তমান নোটিশ</div>${n.text?`<div style="margin-bottom:8px">${esc(n.text)}</div><div class="muted">প্রকাশ: ${esc(n.at)}</div>`:'<div class="muted">কোনো নোটিশ প্রকাশিত নেই।</div>'}</div>
-    <div class="card"><label>ছবি (ঐচ্ছিক)</label><input type="file" accept="image/*" onchange="uploadNoticeImg(this)">${S.nImg?`<img src="${esc(S.nImg)}" style="width:100%;border-radius:12px;margin-top:8px">`:""}</div>
+    <div class="card"><label>ছবি (ঐচ্ছিক)</label><input type="file" accept="image/*" onchange="uploadNoticeImg(this)"><input placeholder="অথবা ছবির লিংক (https://...)" onchange="S.nImg=this.value.trim();render()" style="margin-top:6px">${S.nImg?`<img src="${esc(S.nImg)}" style="width:100%;border-radius:12px;margin-top:8px">`:""}</div>
     <div class="card"><label>নতুন নোটিশ (ইউজার অ্যাপের হোমে দেখাবে)</label><textarea rows="4" oninput="S.nDraft=this.value">${esc(S.nDraft||"")}</textarea>
     <div class="btns" style="margin-top:10px"><button class="btn" onclick="publishNotice()">প্রকাশ করুন</button><button class="btn g" onclick="clearNotice()">নোটিশ মুছুন</button></div></div>`;
 }
@@ -1023,23 +1091,31 @@ function settingsPage(){
       <button class="btn" style="margin-top:12px" onclick="${can?'saveLimits()':'noPerm()'}">সীমা সেভ করুন</button></div>
     <div class="card"><div class="row"><div><div class="t">রক্ষণাবেক্ষণ মোড</div><div class="s">চালু থাকলে ইউজার অ্যাপ বন্ধ দেখাবে</div></div><div class="toggle ${S.settings.maintenance?'on':''}" onclick="${can?'toggleMaintenance()':'noPerm()'}"></div></div></div>
     <div class="card"><div class="row"><div><div class="t">ড্যাশবোর্ডে দোকান হিসাব</div><div class="s">নগদ, বাকি ও বিক্রি এডমিন ড্যাশবোর্ডে দেখাবে</div></div><div class="toggle ${(S.settings.features||{}).dashHisab===false?'':'on'}" onclick="${S.auth.role==="super"?'toggleDashHisab()':'noPerm()'}"></div></div></div>
-    ${appUpdCard()}
+    ${dailyCard()}${adsCard()}${appUpdCard()}
     ${offersCard()}
-    <div class="card"><div class="t" style="margin-bottom:6px">পেমেন্ট নম্বর ও QR (অ্যাড মানি)</div>${[["bkash","বিকাশ"],["nagad","নগদ"],["rocket","রকেট"],["bank","ব্যাংক অ্যাকাউন্ট"]].map(([k,l])=>{const p=(S.settings.payment||{})[k]||{};return `<label>${l} নম্বর</label><input value="${esc(p.no||"")}" onchange="savePay('${k}','no',this.value)">${k!=="bank"?`<label>${l} QR ছবি</label><input type="file" accept="image/*" onchange="uploadQr('${k}',this)">${p.qr?'<div class="muted">QR যুক্ত আছে</div>':""}`:""}`}).join("")}</div>
+    <div class="card"><div class="t" style="margin-bottom:6px">পেমেন্ট নম্বর ও QR (অ্যাড মানি)</div>${[["bkash","বিকাশ"],["nagad","নগদ"],["rocket","রকেট"],["bank","ব্যাংক অ্যাকাউন্ট"]].map(([k,l])=>{const p=(S.settings.payment||{})[k]||{};return `<label>${l} নম্বর</label><input value="${esc(p.no||"")}" onchange="savePay('${k}','no',this.value)">${k!=="bank"?`<label>${l} QR ছবি</label><input type="file" accept="image/*" onchange="uploadQr('${k}',this)"><input placeholder="অথবা QR-এর ছবির লিংক (https://...)" value="${esc(p.qr&&!String(p.qr).startsWith('data:')?p.qr:'')}" onchange="savePay('${k}','qr',this.value.trim())" style="margin-top:6px">${p.qr?'<div class="muted">QR যুক্ত আছে</div>':""}`:""}`}).join("")}</div>
     <div class="card"><label>অ্যাপের নাম (ইউজারদের হেডারে দেখাবে)</label><input value="${esc(S.settings.shopName||"")}" placeholder="ব্রাদার্স টেলিকম" onchange="saveSettings({shopName:this.value.trim()})"></div>
   </div>`;
+}
+function flatPatch(obj,prefix,out){
+  Object.keys(obj).forEach(k=>{
+    const v=obj[k], key=prefix?prefix+"."+k:k;
+    if(v&&typeof v==="object"&&!Array.isArray(v)&&Object.keys(v).length) flatPatch(v,key,out);
+    else out[key]=v;
+  });
+  return out;
 }
 async function saveSettings(patch){
   if(S.auth.role!=="super")return noPerm();
   if(!needDb())return;
-  try{ await DB.doc("settings/main").update(patch); log("সেটিংস আপডেট করা হয়েছে"); }
+  try{ await DB.doc("settings/main").update(flatPatch(patch,"",{})); log("সেটিংস আপডেট করা হয়েছে"); }
   catch(e){ alert("সেভ হয়নি, আবার চেষ্টা করুন"); }
 }
 function toggleFeature(k){const f=S.settings.features||{};saveSettings({features:{[k]:f[k]===false}})}
 function toggleMaintenance(){saveSettings({maintenance:!S.settings.maintenance})}
 function saveLimits(){const d=S.limitDraft||{};const l=S.settings.limits||{};saveSettings({limits:{daily:d.daily!==undefined?+d.daily:l.daily,perTx:d.perTx!==undefined?+d.perTx:l.perTx}});S.limitDraft=null}
 function publishNotice(){const t=(S.nDraft||"").trim();if(!t)return alert("নোটিশ লিখুন");saveSettings({notice:{text:t,img:S.nImg||"",at:new Date().toLocaleString("bn-BD")}});S.nDraft="";S.nImg=""}
-function clearNotice(){S.nDraft="";saveSettings({notice:{text:"",at:""}})}
+function clearNotice(){S.nDraft="";saveSettings({notice:{text:"",img:"",at:""}})}
 function toggleUser(id){
   if(S.auth.role!=="super")return noPerm();
   if(!needDb())return;
