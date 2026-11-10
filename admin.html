@@ -6,7 +6,7 @@
 <title>ব্রাদার্স টেলিকম – এডমিন প্যানেল</title>
 <style>
 body{margin:0;font-family:"Noto Sans Bengali","Kalpurush",system-ui,sans-serif;min-height:100vh;background:var(--bg);color:var(--text);transition:background .3s,color .3s}
-body.classic{--bg:#FFFFFF;--card:#FFFFFF;--text:#111111;--ink:#000000;--accent:#D50000;--on:#FFFFFF;--head:#000000;--headt:#FFFFFF;--hero:#000000;--herot:#FFFFFF;--line:#E0E0E0;--muted:#444444;--pill:#FDECEC;--input:#FFFFFF;--side:#000000;--th:#F5F5F5;--shadow:0 2px 10px rgba(0,0,0,.08)}
+body.classic{--bg:#FFFFFF;--card:#FFFFFF;--text:#1B1B1B;--ink:#14532D;--accent:#1E8E3E;--on:#FFFFFF;--head:#1E8E3E;--headt:#FFFFFF;--hero:#1E8E3E;--herot:#FFFFFF;--line:#DDEFE0;--muted:#4F5F55;--pill:#E8F5EC;--input:#FFFFFF;--side:#14532D;--th:#F1F8F3;--shadow:0 2px 10px rgba(30,142,62,.10);font-size:17px}
 body.gold{--bg:#0B0F14;--card:#131A24;--text:#E9D9A6;--ink:#F3D77A;--accent:linear-gradient(135deg,#E6C14A,#B8912A);--on:#1A1408;--head:linear-gradient(135deg,#1B2230,#0B0F14);--headt:#F3D77A;--hero:linear-gradient(135deg,#E6C14A,#8C6D1F);--herot:#1A1408;--line:#2A2415;--muted:#9C8F6A;--pill:#2A2414;--input:#0F141B;--side:#07090D;--th:#1B2230;--shadow:0 2px 14px rgba(0,0,0,.4)}
 *{box-sizing:border-box}
 button{font-family:inherit}
@@ -136,6 +136,10 @@ body.rose .modebar button.on{background:#D92B33}
 .svc{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .tick{white-space:nowrap;display:inline-block;padding-left:100%;animation:tick 18s linear infinite;font-size:14px}
 @keyframes tick{from{transform:translateX(0)}to{transform:translateX(-100%)}}
+body.classic .t{font-size:17px}
+body.classic .s{font-size:14px}
+body.classic label{font-size:15px}
+body.classic input,body.classic select{font-size:16px}
 </style>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#B71C1C">
@@ -357,14 +361,14 @@ function homeGrid(){
   return row("মূল সেবা", tile("📱","মোবাইল রিচার্জ","openW('recharge')")+tile("🎁","ড্রাইভ প্যাক","openOffers()")+tile("💵","ক্যাশ-ইন","openW('add')"))
     + row("দোকান ও বিল", tile("📒","বাকি খাতা","S.tab='dues';render()")+tile("💡","বিল পেমেন্ট","openW('bill')")+tile("🩸","ব্লাড ব্যাংক","S.tab='blood';render()"))
     + row("সেবা", tile("🌾","কৃষি সেবা","S.svcCat='krishi';S.tab='services';render()")+tile("🚑","অ্যাম্বুলেন্স","S.svcCat='ambulance';S.tab='services';render()")+tile("🔧","মিস্ত্রি/পরিবহন","S.svcCat='mistri';S.tab='services';render()"))
-    + `<button onclick="S.tab='wallet';render()" style="margin-top:12px;width:100%;background:#000;color:#fff;border:none;border-radius:14px;padding:12px;font-size:14px;font-weight:700;cursor:pointer">👛 ওয়ালেট ও ব্যালেন্স দেখুন</button>`;
+    + `<button onclick="S.tab='wallet';render()" style="margin-top:12px;width:100%;background:var(--accent);color:#fff;border:none;border-radius:14px;padding:12px;font-size:15px;font-weight:700;cursor:pointer">👛 ওয়ালেট ও ব্যালেন্স দেখুন</button>`;
 }
 function emergencyCard(){
   return `<div class="card"><div class="t" style="margin-bottom:8px">জরুরি নম্বর (এক ট্যাপে কল)</div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">${EMERGENCY.map(([n,l])=>`<a href="tel:${n}" style="text-decoration:none;background:#D50000;color:#fff;border-radius:12px;padding:10px 4px;text-align:center;font-weight:700"><div style="font-size:20px">${n}</div><div style="font-size:11px;font-weight:600">${l}</div></a>`).join("")}</div></div>`;
 }
 function noticeTicker(){
   const n=(S.settings.notice&&S.settings.notice.text)||"আজকের বিশেষ খবর ও অফারের জন্য অ্যাপে নজর রাখুন।";
-  return `<div style="overflow:hidden;background:#000;color:#fff;border-radius:10px;padding:8px 0;margin-bottom:12px"><div class="tick">📢 ${esc(n)} &nbsp;&nbsp;&nbsp;&nbsp; 📢 ${esc(n)}</div></div>`;
+  return `<div style="overflow:hidden;background:var(--ink);color:#fff;border-radius:10px;padding:8px 0;margin-bottom:12px"><div class="tick">📢 ${esc(n)} &nbsp;&nbsp;&nbsp;&nbsp; 📢 ${esc(n)}</div></div>`;
 }
 function servicesPage(){
   const cat=S.svcCat||"all", q=(S.svcQ||"").trim();
@@ -419,6 +423,9 @@ function addService(){
   saveSettings({services:[...(S.settings.services||[]),{id:nid(),cat:g("sv-cat"),name,phone:g("sv-phone"),area:g("sv-area"),note:g("sv-note")}]});
 }
 function removeService(id){ saveSettings({services:(S.settings.services||[]).filter(s=>s.id!==id)}); }
+function devCard(){
+  return `<div class="note" style="margin:14px 0">ডেভেলপার: <b>ফিরুজ আহমেদ</b> · ব্রাদার্স টেলিকম</div>`;
+}
 function logout(){ if(AUTH) AUTH.signOut(); }
 const DEF_SETTINGS={features:{wallet:true,transfer:true,recharge:true,bill:true},limits:{daily:50000,perTx:10000},maintenance:false,shopName:"",notice:{text:"",at:""}};
 async function seedSettings(){ try{ const s=await DB.doc("settings/main").get(); if(!s.exists) await DB.doc("settings/main").set(DEF_SETTINGS); }catch(e){ console.warn(e); } }
@@ -944,7 +951,7 @@ const TABS={
     const bars=Object.keys(sums).map(k=>`<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;font-size:13px"><span>${TXT[k]}</span><b>${taka(sums[k])}</b></div><div class="bar"><div style="width:${(sums[k]/max*100).toFixed(0)}%"></div></div></div>`).join("");
     return `<div class="card"><h2 style="margin-top:0">হিসাবের সারসংক্ষেপ</h2>${bars}</div>
     <div class="card"><div class="row"><span>আজকের লাভ</span><b>${taka(t.profit)}</b></div><div class="row"><span>ওয়ালেট ব্যালেন্স</span><b>${taka(S.balance)}</b></div></div>`},
-  settings:()=>`${profileEditCard()}${supportCard()}${pinCard()}
+  settings:()=>`${profileEditCard()}${supportCard()}${pinCard()}${devCard()}
     <div class="card">
       <div class="row"><div><div class="t">থিম</div><div class="s">${themeName()} চালু</div></div><button class="btn sm" onclick="toggleTheme()">বদলান</button></div>
       <div class="row"><div><div class="t">সংখ্যা বাংলায়</div><div class="s">উদাহরণ: ${bn(12000)}</div></div><div class="toggle ${S.bnDigits?'on':''}" onclick="S.bnDigits=!S.bnDigits;render()"></div></div>
@@ -1036,7 +1043,7 @@ async function saveW(){
   if(!ok)return;
   S.wmodal=null; S.tab="wallet"; render();
 }
-function themeName(){return {classic:"কালো-সাদা-লাল",gold:"প্রিমিয়াম গোল্ড",rose:"লাইট রোজ"}[S.theme]||"কালো-সাদা-লাল"}
+function themeName(){return {classic:"সবুজ-সাদা-লাল",gold:"প্রিমিয়াম গোল্ড",rose:"লাইট রোজ"}[S.theme]||"সবুজ-সাদা-লাল"}
 function toggleTheme(){const o=["classic","gold","rose"];S.theme=o[(o.indexOf(S.theme)+1)%o.length];render()}
 function addCust(){const n=prompt("কাস্টমারের নাম:");if(n){S.customers.push(n);render()}}
 
@@ -1176,7 +1183,7 @@ function settingsPage(){
       <button class="btn" style="margin-top:12px" onclick="${can?'saveLimits()':'noPerm()'}">সীমা সেভ করুন</button></div>
     <div class="card"><div class="row"><div><div class="t">রক্ষণাবেক্ষণ মোড</div><div class="s">চালু থাকলে ইউজার অ্যাপ বন্ধ দেখাবে</div></div><div class="toggle ${S.settings.maintenance?'on':''}" onclick="${can?'toggleMaintenance()':'noPerm()'}"></div></div></div>
     <div class="card"><div class="row"><div><div class="t">ড্যাশবোর্ডে দোকান হিসাব</div><div class="s">নগদ, বাকি ও বিক্রি এডমিন ড্যাশবোর্ডে দেখাবে</div></div><div class="toggle ${(S.settings.features||{}).dashHisab===false?'':'on'}" onclick="${S.auth.role==="super"?'toggleDashHisab()':'noPerm()'}"></div></div></div>
-    ${servicesCard()}${dailyCard()}${adsCard()}${appUpdCard()}
+    ${devCard()}${servicesCard()}${dailyCard()}${adsCard()}${appUpdCard()}
     ${offersCard()}
     <div class="card"><div class="t" style="margin-bottom:6px">পেমেন্ট নম্বর ও QR (অ্যাড মানি)</div>${[["bkash","বিকাশ"],["nagad","নগদ"],["rocket","রকেট"],["bank","ব্যাংক অ্যাকাউন্ট"]].map(([k,l])=>{const p=(S.settings.payment||{})[k]||{};return `<label>${l} নম্বর</label><input value="${esc(p.no||"")}" onchange="savePay('${k}','no',this.value)">${k!=="bank"?`<label>${l} QR ছবি</label><input type="file" accept="image/*" onchange="uploadQr('${k}',this)"><input placeholder="অথবা QR-এর ছবির লিংক (https://...)" value="${esc(p.qr&&!String(p.qr).startsWith('data:')?p.qr:'')}" onchange="savePay('${k}','qr',this.value.trim())" style="margin-top:6px">${p.qr?'<div class="muted">QR যুক্ত আছে</div>':""}`:""}`}).join("")}</div>
     <div class="card"><label>অ্যাপের নাম (ইউজারদের হেডারে দেখাবে)</label><input value="${esc(S.settings.shopName||"")}" placeholder="ব্রাদার্স টেলিকম" onchange="saveSettings({shopName:this.value.trim()})"></div>
