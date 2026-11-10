@@ -133,6 +133,9 @@ body.rose .modebar button.on{background:#D92B33}
 .chip.on{background:var(--accent);color:var(--on);border-color:transparent}
 .ocard{display:flex;justify-content:space-between;align-items:center;gap:8px;border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px;background:var(--card)}
 .avatar{width:42px;height:42px;border-radius:50%;background:#EDE4FA;color:#4A2C8A;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;flex-shrink:0}
+.svc{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.tick{white-space:nowrap;display:inline-block;padding-left:100%;animation:tick 18s linear infinite;font-size:14px}
+@keyframes tick{from{transform:translateX(0)}to{transform:translateX(-100%)}}
 </style>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#B71C1C">
@@ -172,7 +175,7 @@ const nid=()=>"T"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const TXT={drive:"ড্রাইভ",sale:"বিক্রি",expense:"খরচ",due:"বাকি বিক্রি",collect:"বাকি আদায়",send:"ট্রান্সফার",recharge:"মোবাইল রিচার্জ",bill:"বিল পেমেন্ট",add:"অ্যাড মানি",withdraw:"উইথড্র"};
 const ST={pending:["অপেক্ষমাণ","p-wait"],approved:["অনুমোদিত","p-ok"],rejected:["বাতিল","p-no"],done:["সম্পন্ন","p-ok"]};
 const USERS={firoz:{pass:"6920",role:"super",name:"firoz"},admin:{pass:"1234",role:"super",name:"সুপার এডমিন"},viewer:{pass:"1234",role:"viewer",name:"দেখার অনুমতি"}};
-const TITLES={profile:"আমার প্রোফাইল",sales:"বিক্রি ও খরচ",dues:"বাকি হিসাব",wallet:"মোবাইল ওয়ালেট",report:"রিপোর্ট",settings:"সেটিংস"};
+const TITLES={services:"সেবা",blood:"ব্লাড ব্যাংক",profile:"আমার প্রোফাইল",sales:"বিক্রি ও খরচ",dues:"বাকি হিসাব",wallet:"মোবাইল ওয়ালেট",report:"রিপোর্ট",settings:"সেটিংস"};
 const APAGES=[["dash","📊","ড্যাশবোর্ড"],["req","👛","ওয়ালেট রিকুয়েস্ট"],["users","👥","সকল ইউজার"],["notice","📢","নোটিশ"],["settings","⚙️","সেটিংস ও কন্ট্রোল"],["tx","🧾","সব লেনদেন"],["rep","📥","রিপোর্ট"],["audit","📜","অডিট লগ"]];
 
 const S={
@@ -218,6 +221,7 @@ async function startSubs(u){
   if(S.me!==uid) return;
   S.isAdmin=admin;
   const fail=()=>{ S.dbNote="ডেটা সংযোগে সমস্যা"; render(); };
+  SUBS.push(DB.collection("donors").onSnapshot(q=>{ S.donors=q.docs.map(d=>Object.assign({id:d.id},d.data())); render(); },()=>{}));
   SUBS.push(DB.doc("settings/main").onSnapshot(s=>{ if(s.exists) S.settings=Object.assign({},DEF_SETTINGS,s.data()); render(); },()=>{}));
   SUBS.push((admin?DB.collection("hisab"):DB.collection("hisab").where("uid","==",uid)).onSnapshot(q=>{ S.hisab=q.docs.map(d=>Object.assign({id:d.id},d.data())); S.customers=allCust().map(c=>c.name); render(); },()=>{}));
   SUBS.push((admin?DB.collection("customers"):DB.collection("customers").where("uid","==",uid)).onSnapshot(q=>{ S.custObjs=q.docs.map(d=>Object.assign({id:d.id},d.data())); S.customers=allCust().map(c=>c.name); render(); },()=>{}));
@@ -343,6 +347,78 @@ async function profPhotoChosen(input){
   try{ const url=await fileToDataUrl(f,300,0.8); await DB.doc("users/"+S.me).set({photo:url},{merge:true}); toast("ছবি যুক্ত হয়েছে"); }
   catch(e){ alert("ছবি যুক্ত হয়নি"); }
 }
+const SERVICE_CATS=[["doctor","ডাক্তার"],["pharmacy","ফার্মেসি"],["ambulance","অ্যাম্বুলেন্স"],["mistri","মিস্ত্রি/কারিগর"],["labour","দিনমজুর"],["krishi","কৃষি সেবা"],["market","বাজার দর"],["transport","পরিবহন"]];
+const BLOOD_GROUPS=["A+","A-","B+","B-","AB+","AB-","O+","O-"];
+const EMERGENCY=[["999","জাতীয় জরুরি সেবা"],["333","জাতীয় তথ্য ও সেবা"],["109","নারী ও শিশু নির্যাতন প্রতিরোধ"]];
+function svcCatName(k){const c=SERVICE_CATS.find(x=>x[0]===k);return c?c[1]:""}
+function homeGrid(){
+  const tile=(icon,label,act)=>`<button onclick="${act}" style="background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 4px;cursor:pointer;color:#000;font-size:13px;font-weight:600;box-shadow:var(--shadow)"><div style="font-size:26px;margin-bottom:4px">${icon}</div>${label}</button>`;
+  const row=(title,tiles)=>`<h2 style="margin-top:14px">${title}</h2><div class="svc">${tiles}</div>`;
+  return row("মূল সেবা", tile("📱","মোবাইল রিচার্জ","openW('recharge')")+tile("🎁","ড্রাইভ প্যাক","openOffers()")+tile("💵","ক্যাশ-ইন","openW('add')"))
+    + row("দোকান ও বিল", tile("📒","বাকি খাতা","S.tab='dues';render()")+tile("💡","বিল পেমেন্ট","openW('bill')")+tile("🩸","ব্লাড ব্যাংক","S.tab='blood';render()"))
+    + row("সেবা", tile("🌾","কৃষি সেবা","S.svcCat='krishi';S.tab='services';render()")+tile("🚑","অ্যাম্বুলেন্স","S.svcCat='ambulance';S.tab='services';render()")+tile("🔧","মিস্ত্রি/পরিবহন","S.svcCat='mistri';S.tab='services';render()"))
+    + `<button onclick="S.tab='wallet';render()" style="margin-top:12px;width:100%;background:#000;color:#fff;border:none;border-radius:14px;padding:12px;font-size:14px;font-weight:700;cursor:pointer">👛 ওয়ালেট ও ব্যালেন্স দেখুন</button>`;
+}
+function emergencyCard(){
+  return `<div class="card"><div class="t" style="margin-bottom:8px">জরুরি নম্বর (এক ট্যাপে কল)</div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">${EMERGENCY.map(([n,l])=>`<a href="tel:${n}" style="text-decoration:none;background:#D50000;color:#fff;border-radius:12px;padding:10px 4px;text-align:center;font-weight:700"><div style="font-size:20px">${n}</div><div style="font-size:11px;font-weight:600">${l}</div></a>`).join("")}</div></div>`;
+}
+function noticeTicker(){
+  const n=(S.settings.notice&&S.settings.notice.text)||"আজকের বিশেষ খবর ও অফারের জন্য অ্যাপে নজর রাখুন।";
+  return `<div style="overflow:hidden;background:#000;color:#fff;border-radius:10px;padding:8px 0;margin-bottom:12px"><div class="tick">📢 ${esc(n)} &nbsp;&nbsp;&nbsp;&nbsp; 📢 ${esc(n)}</div></div>`;
+}
+function servicesPage(){
+  const cat=S.svcCat||"all", q=(S.svcQ||"").trim();
+  const list=(S.settings.services||[]).filter(s=>(cat==="all"||s.cat===cat)&&(!q||(s.name+(s.area||"")+(s.note||"")).includes(q)));
+  const chips=[["all","সব"]].concat(SERVICE_CATS).map(([k,l])=>`<button class="chip ${cat===k?'on':''}" onclick="S.svcCat='${k}';render()">${l}</button>`).join("");
+  const rows=list.map(s=>`<div class="row"><div><div class="t">${esc(s.name)}</div><div class="s">${esc(svcCatName(s.cat))}${s.area?" · "+esc(s.area):""}${s.note?" · "+esc(s.note):""}</div></div>${s.phone?`<a class="btn sm" style="text-decoration:none" href="tel:${esc(s.phone)}">📞 কল</a>`:""}</div>`).join("")||'<div class="empty">এখানে এখনো কোনো তথ্য নেই</div>';
+  return `${emergencyCard()}<input placeholder="নাম বা এলাকা খুঁজুন" value="${esc(S.svcQ||"")}" oninput="S.svcQ=this.value;render()" style="margin:10px 0"><div class="chips">${chips}</div><div class="card" style="margin-top:8px">${rows}</div>`;
+}
+function bloodPage(){
+  const me=S.myProfile||{};
+  const g=S.bloodG||"", area=(S.bloodArea||"").trim();
+  const list=(S.donors||[]).filter(d=>(!g||d.group===g)&&(!area||(d.area||"").includes(area)));
+  const groupBtns=BLOOD_GROUPS.map(b=>`<button class="chip ${g===b?'on':''}" onclick="S.bloodG='${b}';render()">${b}</button>`).join("");
+  const rows=list.map(d=>`<div class="row"><div><div class="t">${esc(d.name)} <span class="pill p-no">${esc(d.group)}</span></div><div class="s">${esc(d.area||"")}</div></div><a class="btn sm" style="text-decoration:none" href="tel:${esc(d.phone)}">📞 কল</a></div>`).join("")||'<div class="empty">এই গ্রুপে এখন কোনো ডোনার নেই</div>';
+  const mine=(S.donors||[]).find(d=>d.uid===S.me);
+  const form=mine
+    ? `<div class="card"><div class="t">আপনি ডোনার হিসেবে নিবন্ধিত</div><div class="s">${esc(mine.group)} · ${esc(mine.area||"")}</div><button class="btn sm g" style="margin-top:8px" onclick="donorRemove()">নিবন্ধন বাতিল</button></div>`
+    : `<div class="card"><div class="t" style="margin-bottom:6px">ডোনার হিসেবে নিবন্ধন</div><label>আপনার নাম</label><input id="dn-name" value="${esc(me.name||"")}"><label>রক্তের গ্রুপ</label><select id="dn-group">${BLOOD_GROUPS.map(b=>`<option>${b}</option>`).join("")}</select><label>এলাকা</label><input id="dn-area" placeholder="গ্রাম / ইউনিয়ন"><label>মোবাইল নম্বর</label><input id="dn-phone" type="tel" value="${esc(me.phone||"")}"><button class="btn" style="margin-top:10px" onclick="donorRegister()">নিবন্ধন করুন</button></div>`;
+  return `${form}<h2>ডোনার খুঁজুন</h2><div class="chips">${groupBtns}<button class="chip ${!g?'on':''}" onclick="S.bloodG='';render()">সব</button></div><input placeholder="এলাকা লিখুন" value="${esc(S.bloodArea||"")}" oninput="S.bloodArea=this.value;render()" style="margin:8px 0"><div class="card">${rows}</div>`;
+}
+async function donorRegister(){
+  if(!DB||!S.me)return;
+  const name=(document.getElementById("dn-name").value||"").trim();
+  const group=document.getElementById("dn-group").value;
+  const area=(document.getElementById("dn-area").value||"").trim();
+  const phone=(document.getElementById("dn-phone").value||"").trim();
+  if(!name||!area)return alert("নাম ও এলাকা লিখুন");
+  if(!validPhone(phone))return alert("সঠিক মোবাইল নম্বর দিন");
+  try{ await DB.doc("donors/"+S.me).set({uid:S.me,name,group,area,phone,createdAt:new Date().toISOString()}); toast("আপনি ডোনার হিসেবে নিবন্ধিত হয়েছেন"); }
+  catch(e){ alert("নিবন্ধন হয়নি"); }
+}
+async function donorRemove(){
+  if(!DB||!S.me)return;
+  try{ await DB.doc("donors/"+S.me).delete(); toast("নিবন্ধন বাতিল হয়েছে"); }
+  catch(e){ alert("বাতিল হয়নি"); }
+}
+function servicesCard(){
+  const list=S.settings.services||[];
+  const rows=list.map(s=>`<div class="row"><div><div class="t">${esc(s.name)}</div><div class="s">${esc(svcCatName(s.cat))} · ${esc(s.phone||"")} · ${esc(s.area||"")}</div></div><button class="btn sm g" onclick="removeService('${esc(s.id)}')">মুছুন</button></div>`).join("")||'<div class="muted">কোনো সেবা নেই</div>';
+  return `<div class="card"><div class="t" style="margin-bottom:6px">সেবা তালিকা (ইউজারের সেবা পেজে দেখাবে)</div>${rows}
+    <label>ধরন</label><select id="sv-cat">${SERVICE_CATS.map(([k,l])=>`<option value="${k}">${l}</option>`).join("")}</select>
+    <label>নাম</label><input id="sv-name" placeholder="যেমন: ডা. রহিম">
+    <label>মোবাইল নম্বর</label><input id="sv-phone" type="tel" placeholder="01XXXXXXXXX">
+    <label>এলাকা</label><input id="sv-area" placeholder="গ্রাম / ইউনিয়ন">
+    <label>মন্তব্য (ঐচ্ছিক)</label><input id="sv-note" placeholder="যেমন: রাত ১০টা পর্যন্ত">
+    <button class="btn" style="margin-top:10px" onclick="addService()">সেবা যোগ করুন</button></div>`;
+}
+function addService(){
+  const g=id=>(document.getElementById(id).value||"").trim();
+  const name=g("sv-name");
+  if(!name)return alert("নাম লিখুন");
+  saveSettings({services:[...(S.settings.services||[]),{id:nid(),cat:g("sv-cat"),name,phone:g("sv-phone"),area:g("sv-area"),note:g("sv-note")}]});
+}
+function removeService(id){ saveSettings({services:(S.settings.services||[]).filter(s=>s.id!==id)}); }
 function logout(){ if(AUTH) AUTH.signOut(); }
 const DEF_SETTINGS={features:{wallet:true,transfer:true,recharge:true,bill:true},limits:{daily:50000,perTx:10000},maintenance:false,shopName:"",notice:{text:"",at:""}};
 async function seedSettings(){ try{ const s=await DB.doc("settings/main").get(); if(!s.exists) await DB.doc("settings/main").set(DEF_SETTINGS); }catch(e){ console.warn(e); } }
@@ -838,14 +914,16 @@ function walletIcons(){
   </div>`;
 }
 const TABS={
+  services:()=>servicesPage(),
+  blood:()=>bloodPage(),
   profile:()=>profilePage(),
-  home:()=>{const t=hisabTotals();return `${profileCard()}${adsBanner()}${clockCard()}
+  home:()=>{const t=hisabTotals();return `${noticeTicker()}${profileCard()}${adsBanner()}${clockCard()}
     <div class="card hero"><small>ওয়ালেট ব্যালেন্স</small><b>${taka(S.balance)}</b></div>
     <div class="mini4">
       <div class="card stat"><small>ক্যাশ ব্যালেন্স</small><b>${taka(t.cash)}</b></div>
       <div class="card stat"><small>মোট বাকি</small><b>${taka(t.due)}</b></div>
     </div>
-    ${walletIcons()}
+    ${homeGrid()}${emergencyCard()}
     <h2>সাম্প্রতিক ওয়ালেট লেনদেন</h2>
     <div class="card">${walletRows(myTx().slice(0,4))}</div>`},
   sales:()=>{const list=S.hisab.filter(x=>x.type==="sale"||x.type==="expense").slice().reverse();return `
@@ -895,11 +973,11 @@ function appRoot(){
   if(!S.pinOk)return lockView();
   const body=(TABS[S.tab]||TABS.home)();
   const head=S.tab==="home"?"ডিজিটাল হিসাব ও মোবাইল ওয়ালেট":TITLES[S.tab];
-  const items=[["home","🏠","হোম"],["sales","🧾","হিসাব"],["dues","📒","বাকি"],["wallet","👛","ওয়ালেট"],["report","📊","রিপোর্ট"],["settings","⚙️","সেটিং"]];
+  const items=[["home","🏠","হোম"],["sales","🧾","হিসাব"],["services","🧰","সেবা"],["offers","🎁","অফার"],["profile","👤","প্রোফাইল"]];
   const nav=`<nav>${items.map(([k,i,l])=>`<button class="${S.tab===k?'on':''}" onclick="go('${k}')"><span>${i}</span><br>${l}</button>`).join("")}</nav>`;
   return `<header><div style="display:flex;align-items:center;gap:12px"><img src="${LOGO}" alt="" style="width:46px;height:46px;object-fit:contain;border-radius:50%;background:#fff"><div><h1>${esc(S.settings.shopName||S.shop)} <span style="font-size:11px;background:#fff;color:#8E1B16;border-radius:99px;padding:2px 8px;vertical-align:middle">প্রিমিয়াম</span></h1><p>${head}</p></div></div></header><main>${S.settings.notice&&S.settings.notice.text?`<div class="card" style="border-left:4px solid var(--accent)"><b>📢 নোটিশ</b><div style="margin-top:4px">${esc(S.settings.notice.text||"")}</div>${S.settings.notice.img?`<img src="${esc(S.settings.notice.img)}" style="width:100%;border-radius:12px;margin-top:8px">`:""}</div>`:""}${S.dbNote?`<div class="card muted">${esc(S.dbNote)}</div>`:""}${body}</main>${nav}${S.modal?hisabModal():""}${S.wmodal?walletModal():""}`;
 }
-function go(t){S.tab=t;render();window.scrollTo(0,0)}
+function go(t){if(t==="offers"){openOffers();return}S.tab=t;render();window.scrollTo(0,0)}
 function openH(type,cust){S.modal=type;S.form={amount:"",note:"",cust:cust||""};render()}
 function hisabModal(){
   const type=S.modal,f=S.form,isCust=type==="due"||type==="collect";
@@ -1098,7 +1176,7 @@ function settingsPage(){
       <button class="btn" style="margin-top:12px" onclick="${can?'saveLimits()':'noPerm()'}">সীমা সেভ করুন</button></div>
     <div class="card"><div class="row"><div><div class="t">রক্ষণাবেক্ষণ মোড</div><div class="s">চালু থাকলে ইউজার অ্যাপ বন্ধ দেখাবে</div></div><div class="toggle ${S.settings.maintenance?'on':''}" onclick="${can?'toggleMaintenance()':'noPerm()'}"></div></div></div>
     <div class="card"><div class="row"><div><div class="t">ড্যাশবোর্ডে দোকান হিসাব</div><div class="s">নগদ, বাকি ও বিক্রি এডমিন ড্যাশবোর্ডে দেখাবে</div></div><div class="toggle ${(S.settings.features||{}).dashHisab===false?'':'on'}" onclick="${S.auth.role==="super"?'toggleDashHisab()':'noPerm()'}"></div></div></div>
-    ${dailyCard()}${adsCard()}${appUpdCard()}
+    ${servicesCard()}${dailyCard()}${adsCard()}${appUpdCard()}
     ${offersCard()}
     <div class="card"><div class="t" style="margin-bottom:6px">পেমেন্ট নম্বর ও QR (অ্যাড মানি)</div>${[["bkash","বিকাশ"],["nagad","নগদ"],["rocket","রকেট"],["bank","ব্যাংক অ্যাকাউন্ট"]].map(([k,l])=>{const p=(S.settings.payment||{})[k]||{};return `<label>${l} নম্বর</label><input value="${esc(p.no||"")}" onchange="savePay('${k}','no',this.value)">${k!=="bank"?`<label>${l} QR ছবি</label><input type="file" accept="image/*" onchange="uploadQr('${k}',this)"><input placeholder="অথবা QR-এর ছবির লিংক (https://...)" value="${esc(p.qr&&!String(p.qr).startsWith('data:')?p.qr:'')}" onchange="savePay('${k}','qr',this.value.trim())" style="margin-top:6px">${p.qr?'<div class="muted">QR যুক্ত আছে</div>':""}`:""}`}).join("")}</div>
     <div class="card"><label>অ্যাপের নাম (ইউজারদের হেডারে দেখাবে)</label><input value="${esc(S.settings.shopName||"")}" placeholder="ব্রাদার্স টেলিকম" onchange="saveSettings({shopName:this.value.trim()})"></div>
