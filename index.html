@@ -6,7 +6,7 @@
 <title>ব্রাদার্স টেলিকম – প্ল্যাটফর্ম ডেমো</title>
 <style>
 body{margin:0;font-family:"Noto Sans Bengali","Kalpurush",system-ui,sans-serif;min-height:100vh;background:var(--bg);color:var(--text);transition:background .3s,color .3s}
-body.classic{--bg:#FAFAFA;--card:#FFFFFF;--text:#111111;--ink:#000000;--accent:#C62828;--on:#FFFFFF;--head:#B71C1C;--headt:#FFFFFF;--hero:#C62828;--herot:#FFFFFF;--line:#F2D7D7;--muted:#444444;--pill:#FDEFEF;--input:#FFFFFF;--side:#B71C1C;--th:#FDF0F0;--shadow:0 2px 10px rgba(183,28,28,.08)}
+body.classic{--bg:#FFFFFF;--card:#FFFFFF;--text:#111111;--ink:#000000;--accent:#D50000;--on:#FFFFFF;--head:#000000;--headt:#FFFFFF;--hero:#000000;--herot:#FFFFFF;--line:#E0E0E0;--muted:#444444;--pill:#FDECEC;--input:#FFFFFF;--side:#000000;--th:#F5F5F5;--shadow:0 2px 10px rgba(0,0,0,.08)}
 body.gold{--bg:#0B0F14;--card:#131A24;--text:#E9D9A6;--ink:#F3D77A;--accent:linear-gradient(135deg,#E6C14A,#B8912A);--on:#1A1408;--head:linear-gradient(135deg,#1B2230,#0B0F14);--headt:#F3D77A;--hero:linear-gradient(135deg,#E6C14A,#8C6D1F);--herot:#1A1408;--line:#2A2415;--muted:#9C8F6A;--pill:#2A2414;--input:#0F141B;--side:#07090D;--th:#1B2230;--shadow:0 2px 14px rgba(0,0,0,.4)}
 *{box-sizing:border-box}
 button{font-family:inherit}
@@ -265,7 +265,7 @@ async function saveMyName(v){
   const n=(v||"").trim();
   if(!n)return alert("নাম লিখুন");
   if(!DB||!S.me)return;
-  try{ await DB.doc("users/"+S.me).update({name:n}); toast("নাম বদলানো হয়েছে"); }
+  try{ await DB.doc("users/"+S.me).set({name:n},{merge:true}); toast("নাম বদলানো হয়েছে"); }
   catch(e){ alert("নাম বদলানো হয়নি"); }
 }
 function dailySaleVal(){ return (S.settings.daily||{}).sale||0 }
@@ -320,7 +320,7 @@ function profilePage(){
     ? `<div class="card">${inp("আবেদনকারীর নাম","pf-name",p.name)}${inp("ইমেইল","pf-email",p.email,"email")}${gender}${inp("জন্মতারিখ","pf-dob",p.dob,"date")}${inp("বিভাগ / জেলা","pf-dept",p.dept)}<button class="btn" style="margin-top:12px" onclick="saveProfile()">সেভ করুন</button></div>`
     : `${row("মোবাইল নাম্বার",p.phone)}${row("প্যাকেজ সাবস্ক্রাইবার",p.pkg||"Basic")}${row("আবেদনকারীর নাম",p.name)}${row("ইমেইল",p.email)}${row("লিঙ্গ",p.gender)}${row("জন্মতারিখ",p.dob)}${row("বিভাগ / জেলা",p.dept)}`;
   return `<div class="btns"><button class="btn sm g" onclick="S.tab='home';render()">← ফিরে যান</button><button class="btn sm" onclick="S.profEdit=!S.profEdit;render()">${E?"বাতিল":"সম্পাদনা"}</button></div>
-    <div style="text-align:center;margin-bottom:14px">${av}${E?`<div style="margin-top:8px"><input type="file" accept="image/*" onchange="profPhotoChosen(this)"></div>`:""}</div>
+    <div style="text-align:center;margin-bottom:14px">${av}${E?`<div style="margin-top:8px"><input type="file" accept="image/*" onchange="profPhotoChosen(this)"><input placeholder="অথবা ছবির লিংক (https://...)" onchange="profPhotoUrl(this.value)" style="margin-top:6px"></div>`:""}</div>
     ${body}`;
 }
 async function saveProfile(){
@@ -328,12 +328,19 @@ async function saveProfile(){
   const g=id=>{const el=document.getElementById(id);return el?el.value.trim():""};
   const cur=S.myProfile||{};
   const data={name:g("pf-name")||cur.name||"",email:g("pf-email"),gender:g("pf-gender"),dob:g("pf-dob"),dept:g("pf-dept")};
-  try{ await DB.doc("users/"+S.me).update(data); S.profEdit=false; toast("প্রোফাইল সেভ হয়েছে"); }
+  try{ await DB.doc("users/"+S.me).set(data,{merge:true}); S.profEdit=false; toast("প্রোফাইল সেভ হয়েছে"); }
   catch(e){ alert("প্রোফাইল সেভ হয়নি"); }
+}
+async function profPhotoUrl(v){
+  const u=(v||"").trim();
+  if(!u)return;
+  if(!/^https?:\/\//.test(u))return alert("ছবির লিংক https:// দিয়ে শুরু হতে হবে");
+  try{ await DB.doc("users/"+S.me).set({photo:u},{merge:true}); toast("ছবি যুক্ত হয়েছে"); }
+  catch(e){ alert("ছবি যুক্ত হয়নি"); }
 }
 async function profPhotoChosen(input){
   const f=input.files&&input.files[0]; if(!f)return;
-  try{ const url=await fileToDataUrl(f,300,0.8); await DB.doc("users/"+S.me).update({photo:url}); toast("ছবি যুক্ত হয়েছে"); }
+  try{ const url=await fileToDataUrl(f,300,0.8); await DB.doc("users/"+S.me).set({photo:url},{merge:true}); toast("ছবি যুক্ত হয়েছে"); }
   catch(e){ alert("ছবি যুক্ত হয়নি"); }
 }
 function logout(){ if(AUTH) AUTH.signOut(); }
@@ -951,7 +958,7 @@ async function saveW(){
   if(!ok)return;
   S.wmodal=null; S.tab="wallet"; render();
 }
-function themeName(){return {classic:"ক্লাসিক লাল",gold:"প্রিমিয়াম গোল্ড",rose:"লাইট রোজ"}[S.theme]||"ক্লাসিক লাল"}
+function themeName(){return {classic:"কালো-সাদা-লাল",gold:"প্রিমিয়াম গোল্ড",rose:"লাইট রোজ"}[S.theme]||"কালো-সাদা-লাল"}
 function toggleTheme(){const o=["classic","gold","rose"];S.theme=o[(o.indexOf(S.theme)+1)%o.length];render()}
 function addCust(){const n=prompt("কাস্টমারের নাম:");if(n){S.customers.push(n);render()}}
 
