@@ -219,8 +219,8 @@ async function startSubs(u){
   S.isAdmin=admin;
   const fail=()=>{ S.dbNote="ডেটা সংযোগে সমস্যা"; render(); };
   SUBS.push(DB.doc("settings/main").onSnapshot(s=>{ if(s.exists) S.settings=Object.assign({},DEF_SETTINGS,s.data()); render(); },()=>{}));
-  SUBS.push(DB.collection("hisab").onSnapshot(q=>{ S.hisab=q.docs.map(d=>Object.assign({id:d.id},d.data())); S.customers=allCust().map(c=>c.name); render(); },()=>{}));
-  SUBS.push(DB.collection("customers").onSnapshot(q=>{ S.custObjs=q.docs.map(d=>Object.assign({id:d.id},d.data())); S.customers=allCust().map(c=>c.name); render(); },()=>{}));
+  SUBS.push((admin?DB.collection("hisab"):DB.collection("hisab").where("uid","==",uid)).onSnapshot(q=>{ S.hisab=q.docs.map(d=>Object.assign({id:d.id},d.data())); S.customers=allCust().map(c=>c.name); render(); },()=>{}));
+  SUBS.push((admin?DB.collection("customers"):DB.collection("customers").where("uid","==",uid)).onSnapshot(q=>{ S.custObjs=q.docs.map(d=>Object.assign({id:d.id},d.data())); S.customers=allCust().map(c=>c.name); render(); },()=>{}));
   SUBS.push(DB.doc("wallets/"+uid).onSnapshot(s=>{ if(!admin){ S.balance=s.exists?(s.data().balance||0):0; S.dbNote=""; render(); } },fail));
   SUBS.push(DB.doc("users/"+uid).onSnapshot(s=>{ S.myProfile=s.exists?s.data():null; render(); },()=>{}));
   if(admin){
@@ -241,6 +241,31 @@ async function boot(){
     render();
   });
   render();
+}
+function allPayInfo(){
+  const pm=S.settings.payment||{};
+  const rows=[["bkash","বিকাশ"],["nagad","নগদ"],["rocket","রকেট"],["bank","ব্যাংক অ্যাকাউন্ট"]].map(([k,l])=>{
+    const p=pm[k]||{};
+    if(!p.no&&!p.qr)return "";
+    return `<div class="row" style="align-items:center"><div><div class="t">${l}</div><div class="t" style="font-size:16px">${esc(p.no||"—")}</div></div>${p.qr?`<img src="${esc(p.qr)}" alt="QR" style="width:110px;height:110px;object-fit:contain">`:""}</div>`;
+  }).join("");
+  return rows?`<div class="card" style="margin:10px 0 0">${rows}</div>`:`<div class="muted" style="margin-top:8px">এডমিন এখনো পেমেন্ট নম্বর যোগ করেনি।</div>`;
+}
+function profileCard(){
+  const p=S.myProfile||{};
+  const name=p.name||"ব্যবহারকারী";
+  return `<div class="card" style="display:flex;align-items:center;gap:12px"><div class="avatar" style="width:52px;height:52px;font-size:22px">${esc(name.charAt(0)||"?")}</div><div style="flex:1"><div class="t" style="font-size:16px">${esc(name)}</div><div class="s">মোবাইল: ${esc(p.phone||"—")}</div></div><button class="btn sm g" onclick="S.tab='settings';render()">প্রোফাইল</button></div>`;
+}
+function profileEditCard(){
+  const p=S.myProfile||{};
+  return `<div class="card"><div class="t" style="margin-bottom:6px">আমার প্রোফাইল</div><div class="s">মোবাইল: ${esc(p.phone||"—")}</div><label>আপনার নাম</label><input value="${esc(p.name||"")}" onchange="saveMyName(this.value)"></div>`;
+}
+async function saveMyName(v){
+  const n=(v||"").trim();
+  if(!n)return alert("নাম লিখুন");
+  if(!DB||!S.me)return;
+  try{ await DB.doc("users/"+S.me).update({name:n}); toast("নাম বদলানো হয়েছে"); }
+  catch(e){ alert("নাম বদলানো হয়নি"); }
 }
 function logout(){ if(AUTH) AUTH.signOut(); }
 const DEF_SETTINGS={features:{wallet:true,transfer:true,recharge:true,bill:true},limits:{daily:50000,perTx:10000},maintenance:false,shopName:"",notice:{text:"",at:""}};
@@ -308,12 +333,24 @@ async function submitRecharge(a,note,to){
   alert("রিচার্জ রিকুয়েস্ট এডমিনের কাছে পাঠানো হয়েছে।");
 }
 async function savePay(k,f,v){ saveSettings({payment:{[k]:{[f]:v}}}); }
-async function uploadImage(file){
-  const A=await window.claude.use("assets");
-  if(!A) throw new Error("assets unavailable");
-  const r=await A.upload(file);
-  return r.url;
+function fileToDataUrl(file,maxSide,quality){
+  return new Promise((res,rej)=>{
+    const url=URL.createObjectURL(file);
+    const img=new Image();
+    img.onload=()=>{
+      const scale=Math.min(1,maxSide/Math.max(img.width,img.height));
+      const c=document.createElement("canvas");
+      c.width=Math.max(1,Math.round(img.width*scale));
+      c.height=Math.max(1,Math.round(img.height*scale));
+      c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+      URL.revokeObjectURL(url);
+      res(c.toDataURL("image/jpeg",quality));
+    };
+    img.onerror=()=>{ URL.revokeObjectURL(url); rej(new Error("image")); };
+    img.src=url;
+  });
 }
+async function uploadImage(file,maxSide){ return fileToDataUrl(file,maxSide||400,0.82); }
 async function uploadQr(k,input){
   const file=input.files&&input.files[0]; if(!file){ toast("কোনো ছবি বাছাই হয়নি"); return }
   toast("ছবি পাওয়া গেছে, আপলোড হচ্ছে...");
@@ -323,7 +360,7 @@ async function uploadQr(k,input){
 async function uploadNoticeImg(input){
   const file=input.files&&input.files[0]; if(!file){ toast("কোনো ছবি বাছাই হয়নি"); return }
   toast("ছবি পাওয়া গেছে, আপলোড হচ্ছে...");
-  try{ S.nImg=await uploadImage(file); toast("ছবি যুক্ত হয়েছে"); }
+  try{ S.nImg=await uploadImage(file,800); toast("ছবি যুক্ত হয়েছে"); }
   catch(e){ alert("ছবি আপলোড হয়নি"); }
 }
 const SEED_HISAB=[
@@ -417,6 +454,7 @@ async function adjustBal(uid,kind){
     await DB.doc("wallets/"+uid).set({balance:kind==="add"?cur+a:cur-a});
     await DB.doc("wallet_tx/"+nid()).set({type:kind==="add"?"add":"withdraw",amount:a,note:"এডমিন: "+note,to:"",status:"done",date:today(0),uid});
     log((kind==="add"?"যোগ ":"কাটা ")+taka(a)+" · "+uid);
+    toast("ব্যালেন্স আপডেট হয়েছে");
   }catch(e){ alert("সমন্বয় হয়নি"); }
 }
 function userDetail(){
@@ -536,7 +574,7 @@ async function saveCustomer(){
   if(!name)return alert("নাম লিখুন");
   if(!validPhone(d.phone||""))return alert("সঠিক মোবাইল নম্বর দিন");
   if(!needDb())return;
-  try{ await DB.doc("customers/"+nid()).set({name,phone:d.phone}); S.custForm=false; S.cfd={}; toast("গ্রাহক যোগ হয়েছে"); }
+  try{ await DB.doc("customers/"+nid()).set({name,phone:d.phone,uid:S.me}); S.custForm=false; S.cfd={}; toast("গ্রাহক যোগ হয়েছে"); }
   catch(e){ alert("সেভ হয়নি"); }
 }
 function custList(){
@@ -724,7 +762,7 @@ function walletIcons(){
   </div>`;
 }
 const TABS={
-  home:()=>{const t=hisabTotals();return `${clockCard()}
+  home:()=>{const t=hisabTotals();return `${profileCard()}${clockCard()}
     <div class="card hero"><small>ওয়ালেট ব্যালেন্স</small><b>${taka(S.balance)}</b></div>
     <div class="mini4">
       <div class="card stat"><small>আজকের বিক্রি</small><b>${taka(t.sale)}</b></div>
@@ -753,7 +791,7 @@ const TABS={
     const bars=Object.keys(sums).map(k=>`<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;font-size:13px"><span>${TXT[k]}</span><b>${taka(sums[k])}</b></div><div class="bar"><div style="width:${(sums[k]/max*100).toFixed(0)}%"></div></div></div>`).join("");
     return `<div class="card"><h2 style="margin-top:0">হিসাবের সারসংক্ষেপ</h2>${bars}</div>
     <div class="card"><div class="row"><span>আজকের লাভ</span><b>${taka(t.profit)}</b></div><div class="row"><span>ওয়ালেট ব্যালেন্স</span><b>${taka(S.balance)}</b></div></div>`},
-  settings:()=>`${supportCard()}${pinCard()}
+  settings:()=>`${profileEditCard()}${supportCard()}${pinCard()}
     <div class="card">
       <div class="row"><div><div class="t">থিম</div><div class="s">${themeName()} চালু</div></div><button class="btn sm" onclick="toggleTheme()">বদলান</button></div>
       <div class="row"><div><div class="t">সংখ্যা বাংলায়</div><div class="s">উদাহরণ: ${bn(12000)}</div></div><div class="toggle ${S.bnDigits?'on':''}" onclick="S.bnDigits=!S.bnDigits;render()"></div></div>
@@ -804,7 +842,7 @@ function saveH(){
   if(!a||a<=0)return alert("সঠিক পরিমাণ লিখুন");
   const type=S.modal;
   if((type==="due"||type==="collect")&&!S.form.cust)return alert("কাস্টমার বেছে নিন");
-  const rec={id:nid(),type,amount:a,note:S.form.note||TXT[type],cust:S.form.cust||"",date:today(0)};
+  const rec={id:nid(),type,amount:a,note:S.form.note||TXT[type],cust:S.form.cust||"",date:today(0),uid:S.me};
   if(needDb()) DB.doc("hisab/"+rec.id).set(rec).catch(()=>alert("সেভ হয়নি"));
   S.modal=null;
   S.tab=(type==="sale"||type==="expense")?"sales":"dues";
@@ -817,7 +855,7 @@ function walletModal(){
     send:`<label>প্রাপকের ওয়ালেট নম্বর</label><input type="tel" value="${esc(f.to||"")}" oninput="S.wform.to=this.value">`,
     recharge:`<label>অপারেটর</label><select onchange="S.wform.op=this.value">${["গ্রামীণফোন","রবি","এয়ারটেল","বাংলালিংক"].map(o=>`<option ${o===(f.op||"গ্রামীণফোন")?'selected':''}>${o}</option>`).join("")}</select><label>মোবাইল নম্বর</label><input type="tel" value="${esc(f.to||"")}" oninput="S.wform.to=this.value">`,
     bill:`<label>বিলের ধরন</label><select onchange="S.wform.op=this.value">${["বিদ্যুৎ","গ্যাস","পানি","ইন্টারনেট"].map(o=>`<option ${o===(f.op||"বিদ্যুৎ")?'selected':''}>${o}</option>`).join("")}</select><label>গ্রাহক নম্বর</label><input value="${esc(f.to||"")}" oninput="S.wform.to=this.value">`,
-    add:`<label>মাধ্যম</label><select onchange="S.wform.method=this.value;render()">${["বিকাশ","নগদ","ব্যাংক","এজেন্ট"].map(o=>`<option ${o===m?'selected':''}>${o}</option>`).join("")}</select>${payInfo(m)}<label>${m==="ব্যাংক"?"ট্রান্সফার রেফারেন্স":"আপনার "+m+" নম্বর / TrxID"}</label><input value="${esc(f.to||"")}" oninput="S.wform.to=this.value">`,
+    add:`<label>মাধ্যম</label><select onchange="S.wform.method=this.value;render()">${["বিকাশ","নগদ","ব্যাংক","এজেন্ট"].map(o=>`<option ${o===m?'selected':''}>${o}</option>`).join("")}</select>${allPayInfo()}<label>${m==="ব্যাংক"?"ট্রান্সফার রেফারেন্স":"আপনার "+m+" নম্বর / TrxID"}</label><input value="${esc(f.to||"")}" oninput="S.wform.to=this.value">`,
     withdraw:`<label>কোথায় পাঠাবেন</label><select onchange="S.wform.method=this.value">${["বিকাশ","নগদ","ব্যাংক"].map(o=>`<option ${o===m?'selected':''}>${o}</option>`).join("")}</select><label>নম্বর / অ্যাকাউন্ট</label><input value="${esc(f.to||"")}" oninput="S.wform.to=this.value">`
   }[k]||"";
   const title={send:"ট্রান্সফার",recharge:"মোবাইল রিচার্জ",bill:"বিল পেমেন্ট",add:"অ্যাড মানি রিকুয়েস্ট",withdraw:"উইথড্র রিকুয়েস্ট"}[k];
@@ -987,7 +1025,7 @@ function settingsPage(){
     <div class="card"><div class="row"><div><div class="t">ড্যাশবোর্ডে দোকান হিসাব</div><div class="s">নগদ, বাকি ও বিক্রি এডমিন ড্যাশবোর্ডে দেখাবে</div></div><div class="toggle ${(S.settings.features||{}).dashHisab===false?'':'on'}" onclick="${S.auth.role==="super"?'toggleDashHisab()':'noPerm()'}"></div></div></div>
     ${appUpdCard()}
     ${offersCard()}
-    <div class="card"><div class="t" style="margin-bottom:6px">পেমেন্ট নম্বর ও QR (অ্যাড মানি)</div>${[["bkash","বিকাশ"],["nagad","নগদ"],["bank","ব্যাংক অ্যাকাউন্ট"]].map(([k,l])=>{const p=(S.settings.payment||{})[k]||{};return `<label>${l} নম্বর</label><input value="${esc(p.no||"")}" onchange="savePay('${k}','no',this.value)">${k!=="bank"?`<label>${l} QR ছবি</label><input type="file" accept="image/*" onchange="uploadQr('${k}',this)">${p.qr?'<div class="muted">QR যুক্ত আছে</div>':""}`:""}`}).join("")}</div>
+    <div class="card"><div class="t" style="margin-bottom:6px">পেমেন্ট নম্বর ও QR (অ্যাড মানি)</div>${[["bkash","বিকাশ"],["nagad","নগদ"],["rocket","রকেট"],["bank","ব্যাংক অ্যাকাউন্ট"]].map(([k,l])=>{const p=(S.settings.payment||{})[k]||{};return `<label>${l} নম্বর</label><input value="${esc(p.no||"")}" onchange="savePay('${k}','no',this.value)">${k!=="bank"?`<label>${l} QR ছবি</label><input type="file" accept="image/*" onchange="uploadQr('${k}',this)">${p.qr?'<div class="muted">QR যুক্ত আছে</div>':""}`:""}`}).join("")}</div>
     <div class="card"><label>অ্যাপের নাম (ইউজারদের হেডারে দেখাবে)</label><input value="${esc(S.settings.shopName||"")}" placeholder="ব্রাদার্স টেলিকম" onchange="saveSettings({shopName:this.value.trim()})"></div>
   </div>`;
 }
@@ -1013,7 +1051,7 @@ function auditPage(){return `<div class="card">${S.audit.map(a=>`<div class="row
 /* ---------- render ---------- */
 function render(){
   document.body.className=S.theme+(S.mode==="admin"?" admin":"");
-  const bar=`<div class="modebar"><button class="${S.mode==="app"?'on':''}" onclick="setMode('app')">📱 ইউজার অ্যাপ</button><button class="${S.mode==="admin"?'on':''}" onclick="setMode('admin')">🛡️ এডমিন প্যানেল</button></div>`;
+  const bar="";
   document.getElementById("app").innerHTML = bar + (S.mode==="app"?appRoot():adminRoot()) + (S.toast?toastView():"") + (S.omodal?offersModal():"") + (S.pinModal?pinModalView():"") + (S.mode==="app"&&needUpdate()?updModal():"");
 }
 function setMode(m){S.mode=m;render();window.scrollTo(0,0)}
