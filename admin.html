@@ -168,6 +168,14 @@ body.admin aside button.on{background:#1E8E3E;color:#fff}
 body.admin .main{background:#F4FAF6}
 body.admin .top{background:linear-gradient(90deg,#E8F5EC,#FFFFFF);border:none}
 @media (max-width:760px){.dash2{grid-template-columns:1fr !important}}
+
+/* ---- user app: light blue-grey background, glass cards, navy icons ---- */
+body.classic:not(.admin){background:linear-gradient(180deg,#DCE6EE 0%,#F4F7FA 45%,#EEF3F7 100%) !important}
+body.classic:not(.admin) .card{background:rgba(255,255,255,.72);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.7);border-radius:22px;box-shadow:0 10px 26px rgba(20,54,92,.10)}
+body.classic:not(.admin) .svc button{background:rgba(255,255,255,.82) !important;border-radius:22px !important}
+body.classic:not(.admin) .svc button div{background:#1B3A5C !important;color:#fff !important;border-radius:50% !important}
+body.classic:not(.admin) .icons i{background:#1B3A5C !important;color:#fff}
+body.classic:not(.admin) nav{background:rgba(255,255,255,.95) !important;border-radius:26px 26px 0 0}
 </style>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#B71C1C">
@@ -347,10 +355,10 @@ function adsBanner(){
   return `<div style="display:flex;gap:10px;overflow-x:auto;margin-bottom:12px;padding-bottom:4px">${ads.map(a=>`<a href="${esc(a.link||'#')}" target="_blank" rel="noopener" style="flex:0 0 100%;text-decoration:none;color:#000;background:#fff;border-radius:18px;overflow:hidden;border:1px solid var(--line)"><img src="${esc(a.img)}" alt="" style="width:100%;height:auto;max-height:420px;object-fit:contain;display:block;background:#fff"><div style="padding:8px 10px;font-size:13px;font-weight:600">${esc(a.text||"")}</div></a>`).join("")}</div>`;
 }
 function welcomeBanner(){
-  return `<div style="background:linear-gradient(135deg,#1E8E3E,#0B5D2E);color:#fff;border-radius:22px;padding:20px 16px;margin-bottom:12px;text-align:center;box-shadow:0 6px 18px rgba(30,142,62,.3)"><div style="font-size:15px;opacity:.95">আসসালামু আলাইকুম</div><div style="font-size:22px;font-weight:800;margin:4px 0 10px">${esc(S.settings.shopName||"ব্রাদার্স টেলিকম")} এ স্বাগতম</div><span style="display:inline-block;background:#FFD54F;color:#14532D;border-radius:99px;padding:5px 14px;font-weight:800;font-size:13px">এডমিন: ফিরুজ আহমেদ</span></div>`;
+  return `<div style="position:relative;background:linear-gradient(160deg,#14532D,#0B3D20 60%,#14532D);border:3px solid #D4AF37;border-radius:26px;padding:20px 16px;margin-bottom:14px;text-align:center;box-shadow:0 10px 26px rgba(11,61,32,.35),inset 0 0 0 4px rgba(212,175,55,.25);color:#fff"><div style="font-size:15px;color:#F5E6A8">আসসালামু আলাইকুম</div><div style="font-size:23px;font-weight:800;margin:4px 0 10px;text-shadow:0 2px 6px rgba(0,0,0,.35)">${esc(S.settings.shopName||"ব্রাদার্স টেলিকম")} এ স্বাগতম</div><span style="display:inline-block;background:linear-gradient(90deg,#D4AF37,#F5E6A8);color:#14532D;border-radius:99px;padding:5px 16px;font-weight:800;font-size:13px">এডমিন: ফিরুজ আহমেদ</span></div>`;
 }
 function walletBar(){
-  return `<div style="border-radius:20px;overflow:hidden;background:#fff;border:1px solid var(--line);box-shadow:var(--shadow);margin-bottom:12px"><div onclick="S.tab='wallet';render()" style="background:var(--accent);color:#fff;padding:10px 14px;display:flex;justify-content:space-between;font-weight:700;cursor:pointer"><span>⭐ ওয়ালেট ব্যালেন্স</span><span>বিস্তারিত ›</span></div><div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;gap:8px"><div style="display:flex;align-items:center;gap:10px"><span style="font-size:30px">👛</span><b style="font-size:24px">${taka(S.balance)}</b></div><button class="btn sm" style="border-radius:99px" onclick="openW('add')">＋ অ্যাড মানি</button></div></div>`;
+  return `<div style="position:relative;border-radius:22px;overflow:hidden;background:radial-gradient(circle at 20% 10%,rgba(255,255,255,.08) 0 2px,transparent 3px) 0 0/22px 22px,linear-gradient(160deg,#14532D,#0B3D20);border:2px solid #D4AF37;box-shadow:0 10px 24px rgba(11,61,32,.3);margin-bottom:14px;color:#fff"><div onclick="S.tab='wallet';render()" style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;cursor:pointer;background:rgba(0,0,0,.12)"><span style="font-weight:700">⭐ ওয়ালেট ব্যালেন্স</span><span style="font-size:13px;background:rgba(255,255,255,.14);border-radius:99px;padding:4px 12px">বিস্তারিত ›</span></div><div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;gap:8px"><div style="display:flex;align-items:center;gap:10px"><span style="font-size:30px">👛</span><b style="font-size:26px">${taka(S.balance)}</b></div><button onclick="openW('add')" style="background:linear-gradient(135deg,#2FB24F,#1E8E3E);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:99px;padding:10px 16px;font-weight:700;cursor:pointer">＋ অ্যাড মানি</button></div></div>`;
 }
 function profilePage(){
   const p=S.myProfile||{};
@@ -569,15 +577,15 @@ function myPhone(p){
   return e?e.split("@")[0]:"—";
 }
 function sosCard(){
-  const t=(n,l,st)=>`<a href="tel:${n}" style="text-decoration:none;${st}border-radius:14px;padding:12px 4px;text-align:center;font-weight:800"><div style="font-size:20px">${n}</div><div style="font-size:10px;font-weight:600">${l}</div></a>`;
-  return `<div style="position:relative;overflow:hidden;background:linear-gradient(180deg,#E00000,#B00000);color:#fff;border-radius:22px;padding:16px;margin-bottom:12px;box-shadow:0 6px 18px rgba(213,0,0,.3)">
-    <span style="position:absolute;right:-34px;top:16px;background:#FFC107;color:#000;font-size:11px;font-weight:800;padding:4px 40px;transform:rotate(35deg)">সবার জন্য</span>
+  const t=(n,l,st)=>`<a href="tel:${n}" style="text-decoration:none;${st}border-radius:16px;padding:12px 4px;text-align:center;font-weight:800"><div style="font-size:20px">${n}</div><div style="font-size:10px;font-weight:600">${l}</div></a>`;
+  return `<div style="position:relative;overflow:hidden;background:linear-gradient(180deg,#1B3A5C,#10253D);color:#fff;border-radius:24px;padding:16px;margin-bottom:14px;box-shadow:0 10px 26px rgba(16,37,61,.35)">
+    <span style="position:absolute;right:-34px;top:16px;background:#D4AF37;color:#14532D;font-size:11px;font-weight:800;padding:4px 40px;transform:rotate(35deg)">সবার জন্য</span>
     <div style="font-size:14px;font-weight:700">🚀 জরুরি অফার!</div>
     <div style="font-size:20px;font-weight:800;margin:4px 0 10px">🎁 এক ট্যাপে জরুরি কল</div>
     <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:8px">
       ${t("999","জরুরি সেবা","background:#fff;color:#D50000;font-size:24px;")}
-      ${t("333","তথ্য ও সেবা","background:rgba(255,255,255,.2);color:#fff;font-size:18px;")}
-      ${t("109","নারী ও শিশু","background:rgba(255,255,255,.2);color:#fff;font-size:18px;")}
+      ${t("333","তথ্য ও সেবা","background:rgba(255,255,255,.14);color:#fff;font-size:18px;")}
+      ${t("109","নারী ও শিশু","background:rgba(255,255,255,.14);color:#fff;font-size:18px;")}
     </div></div>`;
 }
 function emergencyPage(){
@@ -608,11 +616,13 @@ function salesChartSvg(){
 function mfsPage(){
   const lane=MFS_LANES.find(l=>l.k===(S.mfsLane||"add-bkash"))||MFS_LANES[0];
   const st=S.mfsSt||"pending";
-  const list=S.tx.filter(x=>x.type===lane.t&&methodOf(x)===lane.m&&(st==="all"||x.status===st)).sort((a,b)=>a.id<b.id?1:-1);
+  const q=(S.mfsQ||"").trim();
+  const list=S.tx.filter(x=>x.type===lane.t&&methodOf(x)===lane.m&&(st==="all"||x.status===st)&&(!q||[(S.users.find(u=>u.id===x.uid)||{}).name,(S.users.find(u=>u.id===x.uid)||{}).phone,x.trxId,x.to].join(" ").includes(q))).sort((a,b)=>a.id<b.id?1:-1);
   const laneTabs=MFS_LANES.map(l=>`<button class="${l.k===lane.k?'on':''}" onclick="S.mfsLane='${l.k}';render()">${l.l} (${bn(S.tx.filter(x=>x.type===l.t&&methodOf(x)===l.m&&x.status==="pending").length)})</button>`).join("");
   const stTabs=[["pending","পেন্ডিং"],["approved","অনুমোদিত"],["rejected","বাতিল"],["all","সব"]].map(([k,l])=>`<button class="${st===k?'on':''}" onclick="S.mfsSt='${k}';render()">${l}</button>`).join("");
   const rows=list.map(x=>{const u=S.users.find(v=>v.id===x.uid)||{}; const s=ST[x.status]||ST.done; return `<tr><td><b>${esc(u.name||"—")}</b><div class="muted">${esc(u.phone||"")}</div></td><td>${esc(x.trxId||x.to||"—")}</td><td><b>${taka(x.amount)}</b></td><td>${esc(x.date||"")}</td><td><span class="pill ${s[1]}">${s[0]}</span></td><td>${reqActs(x)}</td></tr>`}).join("")||`<tr><td colspan="6" class="muted" style="text-align:center;padding:20px">কোনো রিকোয়েস্ট নেই</td></tr>`;
   return `<div class="card muted">⚠️ অনুমোদনের আগে বিকাশ/নগদ মার্চেন্ট অ্যাপে TrxID ও পরিমাণ মিলিয়ে নিন। শুধু TrxID দেখে টাকা জমা ধরে নেবেন না।</div>
+    <input placeholder="নাম, নম্বর বা TrxID খুঁজুন" value="${esc(S.mfsQ||"")}" oninput="S.mfsQ=this.value;render()" style="margin-bottom:10px">
     <div class="tabs">${laneTabs}</div><div class="tabs">${stTabs}</div>
     <div class="wrap"><table><thead><tr><th>ইউজার</th><th>TrxID / নম্বর</th><th>পরিমাণ</th><th>তারিখ</th><th>অবস্থা</th><th>কাজ</th></tr></thead><tbody>${rows}</tbody></table></div>`;
 }
@@ -1170,7 +1180,7 @@ const TABS={
     <div class="card"><div class="row"><span>আজকের লাভ</span><b>${taka(t.profit)}</b></div><div class="row"><span>ওয়ালেট ব্যালেন্স</span><b>${taka(S.balance)}</b></div></div>`},
   settings:()=>`${lockCard()}${profileEditCard()}${supportCard()}${pinCard()}${devCard()}
     <div class="card">
-      <div class="row"><div><div class="t">থিম</div><div class="s">${themeName()} চালু</div></div><button class="btn sm" onclick="toggleTheme()">বদলান</button></div>
+      
       <div class="row"><div><div class="t">সংখ্যা বাংলায়</div><div class="s">উদাহরণ: ${bn(12000)}</div></div><div class="toggle ${S.bnDigits?'on':''}" onclick="S.bnDigits=!S.bnDigits;render()"></div></div>
     </div>
     <div class="card"><div class="t">দোকানের নাম</div><input value="${esc(S.shop)}" onchange="S.shop=this.value||S.shop;render()" style="margin-top:8px"></div>
@@ -1261,7 +1271,7 @@ async function saveW(){
   S.wmodal=null; S.tab="wallet"; render();
 }
 function themeName(){return {classic:"সবুজ-সাদা-লাল",gold:"প্রিমিয়াম গোল্ড",rose:"লাইট রোজ"}[S.theme]||"সবুজ-সাদা-লাল"}
-function toggleTheme(){const o=["classic","gold","rose"];S.theme=o[(o.indexOf(S.theme)+1)%o.length];render()}
+function toggleTheme(){ S.theme="classic"; render(); }
 function addCust(){const n=prompt("কাস্টমারের নাম:");if(n){S.customers.push(n);render()}}
 
 /* ---------- admin panel ---------- */
@@ -1269,10 +1279,10 @@ function pendingCount(){return S.tx.filter(x=>isReq(x)&&x.status==="pending").le
 function adminRoot(){
   if(!S.auth.ok)return loginAdmin();
   const nav=APAGES.map(([k,i,l])=>`<button class="${S.apage===k?'on':''}" onclick="aGo('${k}')">${i} ${l}${k==="req"&&pendingCount()?`<span class="badge">${bn(pendingCount())}</span>`:""}</button>`).join("");
-  return `<div class="shell"><aside><div class="brand" style="display:flex;align-items:center;gap:8px"><img src="${LOGO}" alt="" style="width:36px;height:36px;object-fit:contain;border-radius:50%;background:#fff">ব্রাদার্স টেলিকম</div>${nav}<div style="margin-top:14px"><button onclick="aLogout()">🚪 লগ আউট</button></div></aside>
+  return `<div class="shell"><aside><div class="brand" style="display:flex;align-items:center;gap:8px"><img src="${LOGO}" alt="" style="width:36px;height:36px;object-fit:contain;border-radius:50%;background:#fff">ব্রাদার্স টেলিকম</div>${nav}<div style="margin:14px 0;background:linear-gradient(180deg,#2FB24F,#0B5D2E);border-radius:16px;padding:14px;color:#fff;text-align:center"><div style="font-weight:800;font-size:15px">সব রিকোয়েস্ট</div><div style="font-size:12px;opacity:.9;margin:4px 0 10px">এখান থেকে নিয়ন্ত্রণ করুন</div><button onclick="aGo('mfs')" style="background:#fff;color:#14532D;border:none;border-radius:10px;padding:8px 12px;font-weight:700;cursor:pointer">দেখুন</button></div><div style="margin-top:8px"><button onclick="aLogout()">🚪 লগ আউট</button></div></aside>
     <div class="main"><div class="top"><h2>${APAGES.find(p=>p[0]===S.apage)[2]}</h2>
-      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button class="btn sm g" onclick="toggleTheme()">থিম: ${themeName()}</button><span class="muted">${esc(S.auth.user)} · ${S.auth.role==="super"?"সুপার":"ভিউয়ার"}</span></div></div>
-      ${adminPage()}</div>${S.amodal?decideModal():""}</div>`;
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="muted">${esc(S.auth.user)} · ${S.auth.role==="super"?"সুপার":"ভিউয়ার"}</span></div></div>
+      ${adminPage()}</div><div style="margin-top:16px;background:#E8F5EC;border-radius:14px;padding:12px;text-align:center;color:#14532D;font-weight:600">🛡️ সুরক্ষিত ও নির্ভরযোগ্য প্ল্যাটফর্ম · আপনার গ্রামের সাথে, সবসময়</div>${S.amodal?decideModal():""}</div>`;
 }
 function loginAdmin(){
   return `<div class="login"><div class="box"><div style="font-size:36px">🛡️</div><h2 style="margin:6px 0 2px">এডমিন লগইন</h2>
