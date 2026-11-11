@@ -162,6 +162,12 @@ body.classic .btn.g{box-shadow:none}
 body.classic .row .amt{font-size:16px}
 body.classic .types button.on{background:#1E8E3E}
 body.classic .chip.on{background:#1E8E3E}
+body.admin aside{background:linear-gradient(180deg,#0B5D2E,#14532D);color:#E8F5EC}
+body.admin aside button{color:#E8F5EC}
+body.admin aside button.on{background:#1E8E3E;color:#fff}
+body.admin .main{background:#F4FAF6}
+body.admin .top{background:linear-gradient(90deg,#E8F5EC,#FFFFFF);border:none}
+@media (max-width:760px){.dash2{grid-template-columns:1fr !important}}
 </style>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#B71C1C">
@@ -201,8 +207,8 @@ const nid=()=>"T"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const TXT={drive:"ড্রাইভ",sale:"বিক্রি",expense:"খরচ",due:"বাকি বিক্রি",collect:"বাকি আদায়",send:"ট্রান্সফার",recharge:"মোবাইল রিচার্জ",bill:"বিল পেমেন্ট",add:"অ্যাড মানি",withdraw:"উইথড্র"};
 const ST={pending:["অপেক্ষমাণ","p-wait"],approved:["অনুমোদিত","p-ok"],rejected:["বাতিল","p-no"],done:["সম্পন্ন","p-ok"]};
 const USERS={firoz:{pass:"6920",role:"super",name:"firoz"},admin:{pass:"1234",role:"super",name:"সুপার এডমিন"},viewer:{pass:"1234",role:"viewer",name:"দেখার অনুমতি"}};
-const TITLES={products:"পণ্য ও বিক্রি",services:"সেবা",blood:"ব্লাড ব্যাংক",profile:"আমার প্রোফাইল",sales:"বিক্রি ও খরচ",dues:"বাকি হিসাব",wallet:"মোবাইল ওয়ালেট",report:"রিপোর্ট",settings:"সেটিংস"};
-const APAGES=[["dash","📊","ড্যাশবোর্ড"],["req","👛","ওয়ালেট রিকুয়েস্ট"],["users","👥","সকল ইউজার"],["notice","📢","নোটিশ"],["settings","⚙️","সেটিংস ও কন্ট্রোল"],["tx","🧾","সব লেনদেন"],["rep","📥","রিপোর্ট"],["audit","📜","অডিট লগ"]];
+const TITLES={emergency:"জরুরি সেবা",products:"পণ্য ও বিক্রি",services:"সেবা",blood:"ব্লাড ব্যাংক",profile:"আমার প্রোফাইল",sales:"বিক্রি ও খরচ",dues:"বাকি হিসাব",wallet:"মোবাইল ওয়ালেট",report:"রিপোর্ট",settings:"সেটিংস"};
+const APAGES=[["dash","📊","ড্যাশবোর্ড"],["users","👥","ইউজার ম্যানেজমেন্ট"],["req","👛","ওয়ালেট রিকোয়েস্ট"],["mfs","📲","বিকাশ/নগদ রিকোয়েস্ট"],["tx","🧾","সব লেনদেন"],["notice","📢","নোটিশ ম্যানেজমেন্ট"],["rep","📈","রিপোর্ট ও হিসাব"],["audit","📜","অডিট লগ"],["settings","⚙️","সেটিংস"]];
 
 const S={
   mode:"app", theme:"classic",
@@ -285,8 +291,8 @@ function allPayInfo(){
 function profileCard(){
   const p=S.myProfile||{};
   const name=p.name||"ব্যবহারকারী";
-  const av=p.photo?`<img src="${esc(p.photo)}" alt="" style="width:52px;height:52px;border-radius:50%;object-fit:cover">`:`<div class="avatar" style="width:52px;height:52px;font-size:22px">${esc(name.charAt(0)||"?")}</div>`;
-  return `<div class="card" style="display:flex;align-items:center;gap:12px">${av}<div style="flex:1"><div class="t" style="font-size:16px">${esc(name)}</div><div class="s">মোবাইল: ${esc(myPhone(p))}</div></div><button class="btn sm g" onclick="S.tab='profile';render()">প্রোফাইল</button></div>`;
+  const av=p.photo?`<img src="${esc(p.photo)}" alt="" style="width:60px;height:60px;border-radius:50%;object-fit:cover;border:3px solid var(--accent)">`:`<div class="avatar" style="width:60px;height:60px;font-size:24px;border:3px solid var(--accent)">${esc(name.charAt(0)||"?")}</div>`;
+  return `<div class="card" style="display:flex;align-items:center;gap:12px;border-radius:20px">${av}<div style="flex:1"><div class="t" style="font-size:17px">${esc(name)}</div><div class="s">মোবাইল: ${esc(myPhone(p))}</div></div><button class="btn sm g" style="border-radius:99px" onclick="S.tab='profile';render()">⚙️ প্রোফাইল</button></div>`;
 }
 function profileEditCard(){
   const p=S.myProfile||{};
@@ -337,8 +343,14 @@ function addAd(){
 function removeAd(id){ saveSettings({ads:(S.settings.ads||[]).filter(a=>a.id!==id)}); }
 function adsBanner(){
   const ads=S.settings.ads||[];
-  if(!ads.length)return "";
-  return `<div style="display:flex;gap:10px;overflow-x:auto;margin-bottom:12px;padding-bottom:4px">${ads.map(a=>`<a href="${esc(a.link||'#')}" target="_blank" rel="noopener" style="flex:0 0 100%;text-decoration:none;color:#000;background:#fff;border-radius:14px;overflow:hidden;border:1px solid var(--line)"><img src="${esc(a.img)}" alt="" style="width:100%;height:auto;max-height:420px;object-fit:contain;display:block;background:#fff"><div style="padding:8px 10px;font-size:13px;font-weight:600">${esc(a.text||"")}</div></a>`).join("")}</div>`;
+  if(!ads.length)return welcomeBanner();
+  return `<div style="display:flex;gap:10px;overflow-x:auto;margin-bottom:12px;padding-bottom:4px">${ads.map(a=>`<a href="${esc(a.link||'#')}" target="_blank" rel="noopener" style="flex:0 0 100%;text-decoration:none;color:#000;background:#fff;border-radius:18px;overflow:hidden;border:1px solid var(--line)"><img src="${esc(a.img)}" alt="" style="width:100%;height:auto;max-height:420px;object-fit:contain;display:block;background:#fff"><div style="padding:8px 10px;font-size:13px;font-weight:600">${esc(a.text||"")}</div></a>`).join("")}</div>`;
+}
+function welcomeBanner(){
+  return `<div style="background:linear-gradient(135deg,#1E8E3E,#0B5D2E);color:#fff;border-radius:22px;padding:20px 16px;margin-bottom:12px;text-align:center;box-shadow:0 6px 18px rgba(30,142,62,.3)"><div style="font-size:15px;opacity:.95">আসসালামু আলাইকুম</div><div style="font-size:22px;font-weight:800;margin:4px 0 10px">${esc(S.settings.shopName||"ব্রাদার্স টেলিকম")} এ স্বাগতম</div><span style="display:inline-block;background:#FFD54F;color:#14532D;border-radius:99px;padding:5px 14px;font-weight:800;font-size:13px">এডমিন: ফিরুজ আহমেদ</span></div>`;
+}
+function walletBar(){
+  return `<div style="border-radius:20px;overflow:hidden;background:#fff;border:1px solid var(--line);box-shadow:var(--shadow);margin-bottom:12px"><div onclick="S.tab='wallet';render()" style="background:var(--accent);color:#fff;padding:10px 14px;display:flex;justify-content:space-between;font-weight:700;cursor:pointer"><span>⭐ ওয়ালেট ব্যালেন্স</span><span>বিস্তারিত ›</span></div><div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;gap:8px"><div style="display:flex;align-items:center;gap:10px"><span style="font-size:30px">👛</span><b style="font-size:24px">${taka(S.balance)}</b></div><button class="btn sm" style="border-radius:99px" onclick="openW('add')">＋ অ্যাড মানি</button></div></div>`;
 }
 function profilePage(){
   const p=S.myProfile||{};
@@ -374,7 +386,7 @@ async function profPhotoChosen(input){
   try{ const url=await fileToDataUrl(f,300,0.8); await DB.doc("users/"+S.me).set({photo:url},{merge:true}); toast("ছবি যুক্ত হয়েছে"); }
   catch(e){ alert("ছবি যুক্ত হয়নি"); }
 }
-const SERVICE_CATS=[["doctor","ডাক্তার"],["pharmacy","ফার্মেসি"],["ambulance","অ্যাম্বুলেন্স"],["mistri","মিস্ত্রি/কারিগর"],["labour","দিনমজুর"],["krishi","কৃষি সেবা"],["market","বাজার দর"],["transport","পরিবহন"]];
+const SERVICE_CATS=[["doctor","ডাক্তার"],["pharmacy","ফার্মেসি/ওষুধ"],["hospital","হাসপাতাল"],["courier","কুরিয়ার"],["job","চাকরি ও নিয়োগ"],["lost","হারানো-পাওয়া"],["rent","বাড়ি ভাড়া"],["edu","শিক্ষা ও আবেদন"],["news","এলাকার খবর"],["ambulance","অ্যাম্বুলেন্স"],["mistri","মিস্ত্রি/কারিগর"],["labour","দিনমজুর"],["krishi","কৃষি সেবা"],["market","বাজার দর"],["transport","পরিবহন"]];
 const BLOOD_GROUPS=["A+","A-","B+","B-","AB+","AB-","O+","O-"];
 const EMERGENCY=[["999","জাতীয় জরুরি সেবা"],["333","জাতীয় তথ্য ও সেবা"],["109","নারী ও শিশু নির্যাতন প্রতিরোধ"]];
 function svcCatName(k){const c=SERVICE_CATS.find(x=>x[0]===k);return c?c[1]:""}
@@ -385,14 +397,15 @@ function homeGrid(){
     + row("দোকান ও বিল", tile("📒","বাকি খাতা","S.tab='dues';render()")+tile("💡","বিল পেমেন্ট","openW('bill')")+tile("🩸","ব্লাড ব্যাংক","S.tab='blood';render()"))
     + row("সেবা", tile("🌾","কৃষি সেবা","S.svcCat='krishi';S.tab='services';render()")+tile("🚑","অ্যাম্বুলেন্স","S.svcCat='ambulance';S.tab='services';render()")+tile("🔧","মিস্ত্রি/পরিবহন","S.svcCat='mistri';S.tab='services';render()"))
     + row("দোকান", tile("📦","পণ্য তালিকা","S.tab='products';render()")+tile("🧾","বিক্রি করুন","S.tab='products';render()")+tile("💸","খরচ লিখুন","openH('expense')"))
+    + `<button onclick="S.tab='sales';render()" style="margin-top:10px;width:100%;background:#fff;color:#14532D;border:2px solid #1E8E3E;border-radius:14px;padding:12px;font-size:15px;font-weight:700;cursor:pointer">📒 বিক্রি ও হিসাব খাতা</button>`
     + `<button onclick="S.tab='wallet';render()" style="margin-top:12px;width:100%;background:var(--accent);color:#fff;border:none;border-radius:14px;padding:12px;font-size:15px;font-weight:700;cursor:pointer">👛 ওয়ালেট ও ব্যালেন্স দেখুন</button>`;
 }
 function emergencyCard(){
   return `<div class="card"><div class="t" style="margin-bottom:8px">জরুরি নম্বর (এক ট্যাপে কল)</div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">${EMERGENCY.map(([n,l])=>`<a href="tel:${n}" style="text-decoration:none;background:#D50000;color:#fff;border-radius:12px;padding:10px 4px;text-align:center;font-weight:700"><div style="font-size:20px">${n}</div><div style="font-size:11px;font-weight:600">${l}</div></a>`).join("")}</div></div>`;
 }
 function noticeTicker(){
-  const n=(S.settings.notice&&S.settings.notice.text)||"আজকের বিশেষ খবর ও অফারের জন্য অ্যাপে নজর রাখুন।";
-  return `<div style="overflow:hidden;background:var(--ink);color:#fff;border-radius:10px;padding:8px 0;margin-bottom:12px"><div class="tick">📢 ${esc(n)} &nbsp;&nbsp;&nbsp;&nbsp; 📢 ${esc(n)}</div></div>`;
+  const n=(S.settings.notice&&S.settings.notice.text)||"আজকের বিশেষ খবর ও গুরুত্বপূর্ণ ঘোষণা";
+  return `<div style="background:var(--accent);color:#fff;border-radius:16px;padding:12px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px;font-weight:700;overflow:hidden"><span style="font-size:20px">📢</span><span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(n)}</span><span style="font-size:22px">›</span></div>`;
 }
 function servicesPage(){
   const cat=S.svcCat||"all", q=(S.svcQ||"").trim();
@@ -556,7 +569,52 @@ function myPhone(p){
   return e?e.split("@")[0]:"—";
 }
 function sosCard(){
-  return `<div style="background:linear-gradient(135deg,#D50000,#9B0000);color:#fff;border-radius:20px;padding:16px;margin-bottom:12px;box-shadow:0 6px 18px rgba(213,0,0,.3)"><div style="font-size:13px;opacity:.9">জরুরি অবস্থা?</div><div style="font-size:20px;font-weight:800;margin:2px 0 10px">🚨 এক ট্যাপে জরুরি কল</div><div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:8px"><a href="tel:999" style="text-decoration:none;background:#fff;color:#D50000;border-radius:14px;padding:14px 6px;text-align:center;font-weight:800;font-size:22px">999<div style="font-size:11px;font-weight:600">জরুরি সেবা</div></a><a href="tel:333" style="text-decoration:none;background:rgba(255,255,255,.18);color:#fff;border-radius:14px;padding:12px 4px;text-align:center;font-weight:700;font-size:17px">333<div style="font-size:10px;font-weight:600">তথ্য ও সেবা</div></a><a href="tel:109" style="text-decoration:none;background:rgba(255,255,255,.18);color:#fff;border-radius:14px;padding:12px 4px;text-align:center;font-weight:700;font-size:17px">109<div style="font-size:10px;font-weight:600">নারী ও শিশু</div></a></div></div>`;
+  const t=(n,l,st)=>`<a href="tel:${n}" style="text-decoration:none;${st}border-radius:14px;padding:12px 4px;text-align:center;font-weight:800"><div style="font-size:20px">${n}</div><div style="font-size:10px;font-weight:600">${l}</div></a>`;
+  return `<div style="position:relative;overflow:hidden;background:linear-gradient(180deg,#E00000,#B00000);color:#fff;border-radius:22px;padding:16px;margin-bottom:12px;box-shadow:0 6px 18px rgba(213,0,0,.3)">
+    <span style="position:absolute;right:-34px;top:16px;background:#FFC107;color:#000;font-size:11px;font-weight:800;padding:4px 40px;transform:rotate(35deg)">সবার জন্য</span>
+    <div style="font-size:14px;font-weight:700">🚀 জরুরি অফার!</div>
+    <div style="font-size:20px;font-weight:800;margin:4px 0 10px">🎁 এক ট্যাপে জরুরি কল</div>
+    <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:8px">
+      ${t("999","জরুরি সেবা","background:#fff;color:#D50000;font-size:24px;")}
+      ${t("333","তথ্য ও সেবা","background:rgba(255,255,255,.2);color:#fff;font-size:18px;")}
+      ${t("109","নারী ও শিশু","background:rgba(255,255,255,.2);color:#fff;font-size:18px;")}
+    </div></div>`;
+}
+function emergencyPage(){
+  const urgent=(S.settings.services||[]).filter(s=>["ambulance","hospital","doctor","pharmacy"].includes(s.cat));
+  const rows=urgent.map(s=>`<div class="row"><div><div class="t">${esc(s.name)}</div><div class="s">${esc(svcCatName(s.cat))}${s.area?" · "+esc(s.area):""}</div></div>${s.phone?`<a class="btn sm" style="text-decoration:none;background:#D50000" href="tel:${esc(s.phone)}">📞 কল</a>`:""}</div>`).join("")||'<div class="empty">এলাকার অ্যাম্বুলেন্স ও হাসপাতালের তথ্য এডমিন যোগ করবে</div>';
+  return `${sosCard()}
+    <div class="card"><div class="t" style="margin-bottom:6px">কাছের জরুরি সেবা</div>${rows}</div>
+    <button class="btn" style="background:#D50000;margin-top:4px" onclick="S.tab='blood';render()">🩸 রক্তের জরুরি প্রয়োজন (ডোনার খুঁজুন)</button>
+    <div class="note">জরুরি অবস্থায় প্রথমে ৯৯৯ এ কল করুন।</div>`;
+}
+const MFS_LANES=[{k:"add-bkash",l:"বিকাশ Add Money",t:"add",m:"বিকাশ"},{k:"add-nagad",l:"নগদ Add Money",t:"add",m:"নগদ"},{k:"out-bkash",l:"বিকাশ Cash Out",t:"withdraw",m:"বিকাশ"},{k:"out-nagad",l:"নগদ Cash Out",t:"withdraw",m:"নগদ"}];
+function methodOf(x){ return x.method||(String(x.note||"").indexOf("নগদ")===0?"নগদ":"বিকাশ"); }
+function reqActs(x){
+  return x.status==="pending"&&S.auth.role==="super"
+    ?`<button class="btn sm ok" onclick="openDecide('${x.id}',true)">অনুমোদন</button> <button class="btn sm g" onclick="openDecide('${x.id}',false)">বাতিল</button>`
+    :`<span class="muted">${esc(x.note||"—")}</span>`;
+}
+function salesChartSvg(){
+  const days=[];
+  for(let i=6;i>=0;i--){ const d=today(-i); days.push({d,v:S.hisab.filter(x=>x.type==="sale"&&x.date===d).reduce((a,b)=>a+b.amount,0)}); }
+  const max=Math.max(...days.map(x=>x.v),1);
+  const W=520,H=180,pad=26;
+  const pts=days.map((x,i)=>[pad+i*((W-2*pad)/6), H-pad-(x.v/max)*(H-2*pad)]);
+  const line=pts.map(p=>p[0].toFixed(1)+","+p[1].toFixed(1)).join(" ");
+  const area=`${pad},${H-pad} ${line} ${W-pad},${H-pad}`;
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto"><polygon points="${area}" fill="rgba(30,142,62,.15)"/><polyline points="${line}" fill="none" stroke="#1E8E3E" stroke-width="3"/>${pts.map((p,i)=>`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="4" fill="#1E8E3E"/><text x="${p[0].toFixed(1)}" y="${H-6}" font-size="11" text-anchor="middle" fill="#555">${days[i].d.slice(5)}</text>`).join("")}</svg>`;
+}
+function mfsPage(){
+  const lane=MFS_LANES.find(l=>l.k===(S.mfsLane||"add-bkash"))||MFS_LANES[0];
+  const st=S.mfsSt||"pending";
+  const list=S.tx.filter(x=>x.type===lane.t&&methodOf(x)===lane.m&&(st==="all"||x.status===st)).sort((a,b)=>a.id<b.id?1:-1);
+  const laneTabs=MFS_LANES.map(l=>`<button class="${l.k===lane.k?'on':''}" onclick="S.mfsLane='${l.k}';render()">${l.l} (${bn(S.tx.filter(x=>x.type===l.t&&methodOf(x)===l.m&&x.status==="pending").length)})</button>`).join("");
+  const stTabs=[["pending","পেন্ডিং"],["approved","অনুমোদিত"],["rejected","বাতিল"],["all","সব"]].map(([k,l])=>`<button class="${st===k?'on':''}" onclick="S.mfsSt='${k}';render()">${l}</button>`).join("");
+  const rows=list.map(x=>{const u=S.users.find(v=>v.id===x.uid)||{}; const s=ST[x.status]||ST.done; return `<tr><td><b>${esc(u.name||"—")}</b><div class="muted">${esc(u.phone||"")}</div></td><td>${esc(x.trxId||x.to||"—")}</td><td><b>${taka(x.amount)}</b></td><td>${esc(x.date||"")}</td><td><span class="pill ${s[1]}">${s[0]}</span></td><td>${reqActs(x)}</td></tr>`}).join("")||`<tr><td colspan="6" class="muted" style="text-align:center;padding:20px">কোনো রিকোয়েস্ট নেই</td></tr>`;
+  return `<div class="card muted">⚠️ অনুমোদনের আগে বিকাশ/নগদ মার্চেন্ট অ্যাপে TrxID ও পরিমাণ মিলিয়ে নিন। শুধু TrxID দেখে টাকা জমা ধরে নেবেন না।</div>
+    <div class="tabs">${laneTabs}</div><div class="tabs">${stTabs}</div>
+    <div class="wrap"><table><thead><tr><th>ইউজার</th><th>TrxID / নম্বর</th><th>পরিমাণ</th><th>তারিখ</th><th>অবস্থা</th><th>কাজ</th></tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 function logout(){ if(AUTH) AUTH.signOut(); }
 const DEF_SETTINGS={features:{wallet:true,transfer:true,recharge:true,bill:true},limits:{daily:50000,perTx:10000},maintenance:false,shopName:"",notice:{text:"",at:""}};
@@ -985,29 +1043,54 @@ async function doDebit(type,amount,note,to){
   await DB.doc("wallet_tx/"+id).set({type,amount,note,to:to||"",status:"done",date:today(0),uid:S.me});
   return true;
 }
-async function request(type,amount,note,to){
+const MKEY={"বিকাশ":"bkash","নগদ":"nagad","রকেট":"rocket","ব্যাংক":"bank"};
+async function request(type,amount,note,to,method){
   const gate=gateCheck(type,amount,false); if(gate){ alert(gate); return false }
-  if(!needDb()) return false;
-  await DB.doc("wallet_tx/"+nid()).set({type,amount,note,to:to||"",status:"pending",date:today(0),uid:S.me});
-  return true;
+  if(!needDb())return false;
+  const m=method||"বিকাশ";
+  const tid=nid();
+  const b=DB.batch();
+  if(type==="add"){
+    const trx=String(to||"").toUpperCase().replace(/[^A-Z0-9]/g,"");
+    if(!trx){ alert("ট্রানজেকশন আইডি (TrxID) লিখুন"); return false }
+    b.set(DB.doc("trx_ids/"+(MKEY[m]||"x")+"_"+trx),{uid:S.me,txId:tid,createdAt:new Date().toISOString()});
+    b.set(DB.doc("wallet_tx/"+tid),{type,amount,note:note||TXT[type],to:trx,trxId:trx,method:m,status:"pending",date:today(0),uid:S.me});
+  } else {
+    b.set(DB.doc("wallet_tx/"+tid),{type,amount,note:note||TXT[type],to:to||"",method:m,status:"pending",date:today(0),uid:S.me});
+  }
+  try{ await b.commit(); return true; }
+  catch(e){ alert(type==="add"?"এই TrxID আগে ব্যবহার হয়েছে বা রিকোয়েস্ট সেভ হয়নি":"রিকোয়েস্ট পাঠানো যায়নি"); return false; }
 }
 async function decide(id,ok,note){
   if(S.auth.role!=="super"){ alert("এই কাজের অনুমতি নেই"); return }
   if(!needDb()||S.busy[id]) return;
-  const t=S.tx.find(x=>x.id===id);
-  if(!t||t.status!=="pending") return;
   S.busy[id]=1;
+  const ref=DB.doc("wallet_tx/"+id);
   try{
-    if(!ok&&t.type==="drive") await DB.doc("wallets/"+t.uid).set({balance:bal(t.uid)+t.amount});
-    else if(ok&&t.type==="add") await DB.doc("wallets/"+t.uid).set({balance:bal(t.uid)+t.amount});
-    else if(ok&&(t.type==="withdraw"||t.type==="recharge")){
-      if(bal(t.uid)<t.amount){ alert("ওয়ালেটে ব্যালেন্স যথেষ্ট নয়"); return }
-      await DB.doc("wallets/"+t.uid).set({balance:bal(t.uid)-t.amount});
-    }
-    await DB.doc("wallet_tx/"+id).update({status:ok?"approved":"rejected",note:note||t.note});
-    log((ok?"অনুমোদিত ":"বাতিল ")+id+" · "+TXT[t.type]+" "+taka(t.amount));
-  }catch(e){ alert("কাজটি সম্পন্ন হয়নি") }
-  finally{ delete S.busy[id]; S.amodal=null; render(); }
+    await DB.runTransaction(async tr=>{
+      const snap=await tr.get(ref);
+      if(!snap.exists) throw new Error("missing");
+      const t=snap.data();
+      if(t.status!=="pending") throw new Error("done");
+      const wref=DB.doc("wallets/"+t.uid);
+      if(ok){
+        if(t.type==="add"||t.type==="withdraw"||t.type==="recharge"){
+          const ws=await tr.get(wref);
+          const cur=(ws.exists&&ws.data().balance)||0;
+          if(t.type==="add") tr.set(wref,{balance:cur+t.amount});
+          else { if(cur<t.amount) throw new Error("balance"); tr.set(wref,{balance:cur-t.amount}); }
+        }
+      } else if(t.type==="drive"){
+        const ws=await tr.get(wref);
+        const cur=(ws.exists&&ws.data().balance)||0;
+        tr.set(wref,{balance:cur+t.amount});
+      }
+      tr.update(ref,{status:ok?"approved":"rejected",note:note||t.note,decidedAt:new Date().toISOString(),decidedBy:S.auth.user});
+    });
+    log((ok?"অনুমোদিত ":"বাতিল ")+id);
+  }catch(e){
+    alert(e.message==="done"?"এই রিকোয়েস্ট আগেই প্রক্রিয়া হয়েছে":e.message==="balance"?"ব্যালেন্স যথেষ্ট নয়":e.message==="missing"?"রিকোয়েস্টটি পাওয়া যায়নি":"কাজটি সম্পন্ন হয়নি");
+  }finally{ delete S.busy[id]; S.amodal=null; render(); }
 }
 
 /* ---------- user app ---------- */
@@ -1056,9 +1139,10 @@ const TABS={
   services:()=>servicesPage(),
   blood:()=>bloodPage(),
   products:()=>productsPage(),
+  emergency:()=>emergencyPage(),
   profile:()=>profilePage(),
   home:()=>{const t=hisabTotals();return `${noticeTicker()}${sosCard()}${profileCard()}${adsBanner()}${clockCard()}
-    <div class="card hero"><small>ওয়ালেট ব্যালেন্স</small><b>${taka(S.balance)}</b></div>
+    ${walletBar()}
     <div class="mini4">
       <div class="card stat"><small>ক্যাশ ব্যালেন্স</small><b>${taka(t.cash)}</b></div>
       <div class="card stat"><small>মোট বাকি</small><b>${taka(t.due)}</b></div>
@@ -1112,10 +1196,10 @@ function appRoot(){
   if(isBlocked())return fullMsg("অ্যাকাউন্ট বন্ধ","এই অ্যাকাউন্টে এখন প্রবেশ করা যাচ্ছে না।");
   if(!S.pinOk)return lockView();
   const body=(TABS[S.tab]||TABS.home)();
-  const head=S.tab==="home"?"ডিজিটাল হিসাব ও মোবাইল ওয়ালেট":TITLES[S.tab];
-  const items=[["home","🏠","হোম"],["sales","🧾","হিসাব"],["services","🧰","সেবা"],["offers","🎁","অফার"],["profile","👤","প্রোফাইল"]];
+  const head=S.tab==="home"?"আপনার এলাকার সব সেবা এক জায়গায়":TITLES[S.tab];
+  const items=[["home","🏠","হোম"],["services","🧰","সেবাসমূহ"],["emergency","🚨","জরুরি সেবা"],["wallet","👛","ওয়ালেট"],["profile","👤","প্রোফাইল"]];
   const nav=`<nav>${items.map(([k,i,l])=>`<button class="${S.tab===k?'on':''}" onclick="go('${k}')"><span>${i}</span><br>${l}</button>`).join("")}</nav>`;
-  return `<header><div style="display:flex;align-items:center;gap:12px"><img src="${LOGO}" alt="" style="width:46px;height:46px;object-fit:contain;border-radius:50%;background:#fff"><div><h1>${esc(S.settings.shopName||S.shop)} <span style="font-size:11px;background:#fff;color:#8E1B16;border-radius:99px;padding:2px 8px;vertical-align:middle">প্রিমিয়াম</span></h1><p>${head}</p></div></div></header><main>${S.settings.notice&&S.settings.notice.text?`<div class="card" style="border-left:4px solid var(--accent)"><b>📢 নোটিশ</b><div style="margin-top:4px">${esc(S.settings.notice.text||"")}</div>${S.settings.notice.img?`<img src="${esc(S.settings.notice.img)}" style="width:100%;border-radius:12px;margin-top:8px">`:""}</div>`:""}${S.dbNote?`<div class="card muted">${esc(S.dbNote)}</div>`:""}${body}${devCard()}</main>${nav}${S.modal?hisabModal():""}${S.wmodal?walletModal():""}`;
+  return `<header><div style="display:flex;align-items:center;gap:12px"><img src="${LOGO}" alt="" style="width:46px;height:46px;object-fit:contain;border-radius:50%;background:#fff"><div><h1>${esc(S.settings.shopName||S.shop)} <span style="font-size:11px;background:#fff;color:#8E1B16;border-radius:99px;padding:2px 8px;vertical-align:middle">প্রিমিয়াম</span></h1><p>${head}</p></div><span style="margin-left:auto;font-size:24px">🔔</span></div></header><main>${S.settings.notice&&S.settings.notice.text?`<div class="card" style="border-left:4px solid var(--accent)"><b>📢 নোটিশ</b><div style="margin-top:4px">${esc(S.settings.notice.text||"")}</div>${S.settings.notice.img?`<img src="${esc(S.settings.notice.img)}" style="width:100%;border-radius:12px;margin-top:8px">`:""}</div>`:""}${S.dbNote?`<div class="card muted">${esc(S.dbNote)}</div>`:""}${body}${devCard()}</main>${nav}${S.modal?hisabModal():""}${S.wmodal?walletModal():""}`;
 }
 function go(t){if(t==="offers"){openOffers();return}S.tab=t;render();window.scrollTo(0,0)}
 function openH(type,cust){S.modal=type;S.form={amount:"",note:"",cust:cust||""};render()}
@@ -1148,7 +1232,7 @@ function walletModal(){
     send:`<label>প্রাপকের ওয়ালেট নম্বর</label><input type="tel" value="${esc(f.to||"")}" oninput="S.wform.to=this.value">`,
     recharge:`<label>অপারেটর</label><select onchange="S.wform.op=this.value">${["গ্রামীণফোন","রবি","এয়ারটেল","বাংলালিংক"].map(o=>`<option ${o===(f.op||"গ্রামীণফোন")?'selected':''}>${o}</option>`).join("")}</select><label>মোবাইল নম্বর</label><input type="tel" value="${esc(f.to||"")}" oninput="S.wform.to=this.value">`,
     bill:`<label>বিলের ধরন</label><select onchange="S.wform.op=this.value">${["বিদ্যুৎ","গ্যাস","পানি","ইন্টারনেট"].map(o=>`<option ${o===(f.op||"বিদ্যুৎ")?'selected':''}>${o}</option>`).join("")}</select><label>গ্রাহক নম্বর</label><input value="${esc(f.to||"")}" oninput="S.wform.to=this.value">`,
-    add:`<label>মাধ্যম বেছে নিন</label><div class="types">${["বিকাশ","নগদ","রকেট","ব্যাংক"].map(o=>`<button class="${m===o?'on':''}" onclick="S.wform.method='${o}';render()">${o}</button>`).join("")}</div>${payInfo(m)}<label>${m==="ব্যাংক"?"ট্রান্সফার রেফারেন্স":"আপনার "+m+" নম্বর / TrxID"}</label><input value="${esc(f.to||"")}" oninput="S.wform.to=this.value">`,
+    add:`<label>মাধ্যম বেছে নিন</label><div class="types">${["বিকাশ","নগদ","রকেট","ব্যাংক"].map(o=>`<button class="${m===o?'on':''}" onclick="S.wform.method='${o}';render()">${o}</button>`).join("")}</div>${payInfo(m)}<label>${m==="ব্যাংক"?"ট্রান্সফার রেফারেন্স":"ট্রানজেকশন আইডি (TrxID)"}</label><input value="${esc(f.to||"")}" oninput="S.wform.to=this.value">`,
     withdraw:`<label>কোথায় পাঠাবেন</label><select onchange="S.wform.method=this.value">${["বিকাশ","নগদ","ব্যাংক"].map(o=>`<option ${o===m?'selected':''}>${o}</option>`).join("")}</select><label>নম্বর / অ্যাকাউন্ট</label><input value="${esc(f.to||"")}" oninput="S.wform.to=this.value">`
   }[k]||"";
   const title={send:"ট্রান্সফার",recharge:"মোবাইল রিচার্জ",bill:"বিল পেমেন্ট",add:"অ্যাড মানি রিকুয়েস্ট",withdraw:"উইথড্র রিকুয়েস্ট"}[k];
@@ -1170,7 +1254,7 @@ async function saveW(){
     ok=k==="recharge"?(openPin(()=>submitRecharge(a,note,f.to)),"pending"):await debit(k,a,note,f.to);
   } else {
     const note=(f.method||"বিকাশ")+(k==="withdraw"?" · উইথড্র":" · অ্যাড মানি");
-    ok=await request(k,a,note,f.to);
+    ok=await request(k,a,note,f.to,f.method||"বিকাশ");
     if(ok) alert("রিকুয়েস্ট পাঠানো হয়েছে। এডমিন অনুমোদন করলে ব্যালেন্সে যোগ হবে।");
   }
   if(!ok)return;
@@ -1212,19 +1296,43 @@ async function aLogin(){
 function aLogout(){S.auth={user:"",pass:"",err:"",ok:false,role:"",name:""};if(AUTH)AUTH.signOut();render()}
 function aGo(p){S.apage=p;S.afilter="all";S.asearch="";render()}
 function adminPage(){
-  return ({dash:dashPage,req:reqPage,users:()=>S.udetail?userDetail():usersPage(),notice:noticePage,settings:settingsPage,tx:txPage,rep:repPage,audit:auditPage})[S.apage]();
+  return ({dash:dashPage,mfs:mfsPage,req:reqPage,users:()=>S.udetail?userDetail():usersPage(),notice:noticePage,settings:settingsPage,tx:txPage,rep:repPage,audit:auditPage})[S.apage]();
 }
 function dashPage(){
-  const pend=S.tx.filter(x=>isReq(x)&&x.status==="pending");
-  const pendAmt=pend.reduce((a,b)=>a+b.amount,0);
-  return `${hisabCardHtml()}<div class="cards">
-    <div class="card stat"><small>অপেক্ষমাণ রিকুয়েস্ট</small><b>${bn(pend.length)}টি</b></div>
-    <div class="card stat"><small>অপেক্ষমাণ পরিমাণ</small><b>${taka(pendAmt)}</b></div>
-    <div class="card stat"><small>মোট ওয়ালেট ব্যালেন্স</small><b>${taka(Object.values(S.wallets||{}).reduce((a,b)=>a+b,0))}</b></div>
-    <div class="card stat"><small>মোট ইউজার</small><b>${bn(S.users.length)}</b></div>
+  const reqs=S.tx.filter(x=>isReq(x));
+  const pend=reqs.filter(x=>x.status==="pending");
+  const sumW=Object.values(S.wallets||{}).reduce((a,b)=>a+b,0);
+  const todaySale=S.hisab.filter(x=>x.type==="sale"&&x.date===today(0)).reduce((a,b)=>a+b.amount,0);
+  const todayExp=S.hisab.filter(x=>x.type==="expense"&&x.date===today(0)).reduce((a,b)=>a+b.amount,0);
+  const cnt=(t,m,s)=>reqs.filter(x=>x.type===t&&methodOf(x)===m&&x.status===s).length;
+  const stat=(bg,icon,label,val)=>`<div style="background:${bg};color:#fff;border-radius:18px;padding:14px;box-shadow:0 6px 16px rgba(0,0,0,.12)"><div style="font-size:13px;opacity:.9">${icon} ${label}</div><div style="font-size:21px;font-weight:800;margin-top:4px">${val}</div></div>`;
+  const mini=(bg,label,val)=>`<div style="background:${bg};border-radius:16px;padding:12px;text-align:center"><div style="font-size:13px;font-weight:700">${label}</div><div style="font-size:26px;font-weight:800">${val}</div></div>`;
+  const q=(icon,label,page)=>`<button onclick="aGo('${page}')" style="background:#fff;border:1px solid var(--line);border-radius:16px;padding:12px 6px;cursor:pointer;color:#14532D;font-weight:700;font-size:13px">${icon}<br>${label}</button>`;
+  const rows=pend.slice().sort((a,b)=>a.id<b.id?1:-1).slice(0,6).map(x=>{const u=S.users.find(v=>v.id===x.uid)||{};return `<tr><td>${esc(u.name||"—")}</td><td>${methodOf(x)}</td><td>${TXT[x.type]||""}</td><td><b>${taka(x.amount)}</b></td><td>${esc(x.trxId||x.to||"")}</td><td>${reqActs(x)}</td></tr>`}).join("")||`<tr><td colspan="6" class="muted" style="text-align:center;padding:16px">কোনো অপেক্ষমাণ রিকোয়েস্ট নেই</td></tr>`;
+  return `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:14px">
+    ${stat("linear-gradient(135deg,#1E8E3E,#0B5D2E)","👥","মোট ইউজার",bn(S.users.length))}
+    ${stat("linear-gradient(135deg,#2563EB,#1E40AF)","👛","ওয়ালেট ব্যালেন্স",taka(sumW))}
+    ${stat("linear-gradient(135deg,#7C3AED,#5B21B6)","🛒","আজকের বিক্রি",taka(todaySale))}
+    ${stat("linear-gradient(135deg,#F59E0B,#D97706)","💸","আজকের খরচ",taka(todayExp))}
+    ${stat("linear-gradient(135deg,#0D9488,#115E59)","📈","আজকের লাভ",taka(todaySale-todayExp))}
   </div>
-  <div class="card"><div class="t" style="margin-bottom:6px">দ্রুত কাজ</div><div class="muted" style="margin-bottom:10px">${pend.length?bn(pend.length)+"টি রিকুয়েস্ট অনুমোদনের অপেক্ষায় আছে।":"কোনো অপেক্ষমাণ রিকুয়েস্ট নেই।"}</div><button class="btn" style="width:auto" onclick="aGo('req')">রিকুয়েস্ট দেখুন</button></div>
-  <div class="card"><div class="t" style="margin-bottom:6px">সর্বশেষ কার্যক্রম</div>${S.audit.slice(0,4).map(a=>`<div class="row"><div><div class="t">${esc(a.act)}</div><div class="s">${esc(a.who)} · ${a.t}</div></div></div>`).join("")}</div>`;
+  <div class="dash2" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+    <div class="card"><div class="t" style="margin-bottom:8px">বিকাশ/নগদ অ্যাড মানি সারাংশ</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      ${mini("#FCE7F3","বিকাশ পেন্ডিং",bn(cnt("add","বিকাশ","pending")))}
+      ${mini("#DCFCE7","বিকাশ অনুমোদিত",bn(cnt("add","বিকাশ","approved")))}
+      ${mini("#FFEDD5","নগদ পেন্ডিং",bn(cnt("add","নগদ","pending")))}
+      ${mini("#FEF9C3","নগদ অনুমোদিত",bn(cnt("add","নগদ","approved")))}
+    </div></div>
+    <div class="card"><div class="t" style="margin-bottom:6px">বিক্রির সারসংক্ষেপ (৭ দিন)</div>${salesChartSvg()}</div>
+  </div>
+  <div class="card"><div class="t" style="margin-bottom:8px">দ্রুত অ্যাক্সেস</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px">
+    ${q("👥","ইউজার","users")}${q("👛","ওয়ালেট রিকোয়েস্ট","req")}${q("📲","বিকাশ/নগদ","mfs")}${q("🧾","সব লেনদেন","tx")}${q("📢","নোটিশ","notice")}${q("⚙️","সেটিংস","settings")}
+  </div></div>
+  <div class="card"><div class="t" style="margin-bottom:8px">অপেক্ষমাণ রিকোয়েস্ট</div><div class="wrap"><table><thead><tr><th>ইউজার</th><th>মাধ্যম</th><th>ধরন</th><th>পরিমাণ</th><th>TrxID / নম্বর</th><th>কাজ</th></tr></thead><tbody>${rows}</tbody></table></div></div>
+  <div class="dash2" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+    <div class="card"><div class="t" style="margin-bottom:6px">সর্বশেষ নোটিশ</div>${S.settings.notice&&S.settings.notice.text?`<div>${esc(S.settings.notice.text)}</div><div class="muted" style="margin-top:6px">${esc(S.settings.notice.at||"")}</div>`:'<div class="muted">কোনো নোটিশ নেই</div>'}</div>
+    <div class="card"><div class="t" style="margin-bottom:6px">কাস্টমার সাপোর্ট</div><div class="muted">হোয়াটসঅ্যাপ: 01404908632 · ২৪ ঘণ্টা</div></div>
+  </div>`;
 }
 function reqPage(){
   const list=S.tx.filter(x=>isReq(x))
