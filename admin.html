@@ -189,6 +189,20 @@ function addAd(){
   if(video&&!/^https?:\/\//.test(video)) return alert("ভিডিওর লিংক https:// দিয়ে শুরু হতে হবে");
   saveS({ads:[...(S.settings.ads||[]),{id:nid(),text:document.getElementById("ad-t").value.trim(),link:document.getElementById("ad-l").value.trim(),img,video}]});
 }
+function qrFile(k,input){
+  const f=input.files&&input.files[0]; if(!f) return;
+  const url=URL.createObjectURL(f); const img=new Image();
+  img.onload=()=>{
+    const sc=Math.min(1,400/Math.max(img.width,img.height));
+    const c=document.createElement("canvas");
+    c.width=Math.max(1,Math.round(img.width*sc)); c.height=Math.max(1,Math.round(img.height*sc));
+    c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+    URL.revokeObjectURL(url);
+    saveS({["payment."+k+".qr"]:c.toDataURL("image/jpeg",0.85)});
+  };
+  img.onerror=()=>{ URL.revokeObjectURL(url); alert("ছবি পড়া যায়নি"); };
+  img.src=url;
+}
 function rmAd(id){ saveS({ads:(S.settings.ads||[]).filter(x=>x.id!==id)}) }
 function pubNotice(){
   const t=document.getElementById("nt").value.trim(); if(!t) return alert("নোটিশ লিখুন");
@@ -299,7 +313,7 @@ function repPage(){
 function settingsPage(){
   const s=S.settings, pay=s.payment||{}, f=s.features||{}, l=s.limits||{}, d=s.daily||{}, a=s.app||{};
   const payRows=[["bkash","বিকাশ"],["nagad","নগদ"],["rocket","রকেট"],["bank","ব্যাংক অ্যাকাউন্ট"]].map(([k,n])=>
-    `<label>${n} নম্বর</label><input value="${esc((pay[k]||{}).no||"")}" onchange="saveS({'payment.${k}.no':this.value.trim()})">`).join("");
+    `<label>${n} নম্বর</label><input value="${esc((pay[k]||{}).no||"")}" onchange="saveS({'payment.${k}.no':this.value.trim()})"><label>${n} QR ছবি (লিংক)</label><input value="${esc((pay[k]||{}).qr||"")}" placeholder="https://...jpg" onchange="saveS({'payment.${k}.qr':this.value.trim()})"><label>অথবা ফাইল থেকে QR বাছাই করুন</label><input type="file" accept="image/*" onchange="qrFile('${k}',this)">${(pay[k]||{}).qr?`<img src="${esc((pay[k]||{}).qr)}" alt="QR" style="width:110px;height:110px;object-fit:contain;margin-top:6px;border:1px solid #CFE5D6;border-radius:10px">`:""}`).join("");
   const featRows=[["wallet","ওয়ালেট"],["transfer","ট্রান্সফার"],["recharge","রিচার্জ"],["bill","বিল পেমেন্ট"]].map(([k,n])=>
     `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0"><span>${n}</span><button class="btn sm ${f[k]===false?'g':''}" onclick="saveS({'features.${k}':${f[k]===false}})">${f[k]===false?'বন্ধ':'চালু'}</button></div>`).join("");
   const svc=(s.services||[]).map(x=>`<div style="display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid #eee"><span>${esc(x.name)} · ${esc(x.cat)} · ${esc(x.phone||"")}</span><button class="btn sm red" onclick="rmSvc('${esc(x.id)}')">মুছুন</button></div>`).join("")||'<div class="muted">কোনো সেবা নেই</div>';
