@@ -182,9 +182,12 @@ function addOffer(){
 }
 function rmOffer(id){ saveS({offers:(S.settings.offers||[]).filter(x=>x.id!==id)}) }
 function addAd(){
-  const img=document.getElementById("ad-i").value.trim(); if(!img) return alert("ছবির লিংক দিন");
-  if(!/^https?:\/\//.test(img)) return alert("ছবির লিংক https:// দিয়ে শুরু হতে হবে");
-  saveS({ads:[...(S.settings.ads||[]),{id:nid(),text:document.getElementById("ad-t").value.trim(),link:document.getElementById("ad-l").value.trim(),img}]});
+  const img=document.getElementById("ad-i").value.trim();
+  const video=document.getElementById("ad-v").value.trim();
+  if(!img&&!video) return alert("ছবি বা ভিডিওর লিংক দিন");
+  if(img&&!/^https?:\/\//.test(img)) return alert("ছবির লিংক https:// দিয়ে শুরু হতে হবে");
+  if(video&&!/^https?:\/\//.test(video)) return alert("ভিডিওর লিংক https:// দিয়ে শুরু হতে হবে");
+  saveS({ads:[...(S.settings.ads||[]),{id:nid(),text:document.getElementById("ad-t").value.trim(),link:document.getElementById("ad-l").value.trim(),img,video}]});
 }
 function rmAd(id){ saveS({ads:(S.settings.ads||[]).filter(x=>x.id!==id)}) }
 function pubNotice(){
@@ -315,7 +318,7 @@ function settingsPage(){
     <div class="card"><b>অ্যাপ আপডেট</b><label>নতুন সংস্করণ (যেমন 1.1.0)</label><input id="ap-v" value="${esc(a.version||"")}"><label>আপডেট লিংক</label><input id="ap-u" value="${esc(a.url||"")}" placeholder="https://..."><label>বার্তা</label><input id="ap-n" value="${esc(a.note||"")}">
       <div style="display:flex;gap:8px;align-items:center;margin:6px 0"><span>বাধ্যতামূলক</span><button class="btn sm ${a.force?'':'g'}" onclick="toggleForce()">${a.force?'হ্যাঁ':'না'}</button></div>
       <button class="btn" onclick="saveApp()">প্রকাশ করুন</button></div>
-    <div class="card"><b>বিজ্ঞাপন (হোমের ব্যানার)</b>${ads}<label>লেখা</label><input id="ad-t"><label>ক্লিক করলে যাবে (ঐচ্ছিক)</label><input id="ad-l" placeholder="https://..."><label>ছবির লিংক</label><input id="ad-i" placeholder="https://...jpg"><button class="btn" onclick="addAd()">যোগ করুন</button></div>
+    <div class="card"><b>বিজ্ঞাপন (হোমের ব্যানার)</b>${ads}<label>লেখা</label><input id="ad-t"><label>ক্লিক করলে যাবে (ঐচ্ছিক)</label><input id="ad-l" placeholder="https://..."><label>ছবির লিংক</label><input id="ad-i" placeholder="https://...jpg"><label>শর্ট ভিডিওর লিংক (mp4, ঐচ্ছিক)</label><input id="ad-v" placeholder="https://...mp4"><button class="btn" onclick="addAd()">যোগ করুন</button></div>
   </div>
   <div class="grid2">
     <div class="card"><b>সেবা তালিকা (ইউজারের সেবাসমূহ)</b>${svc}<label>ধরন</label><select id="sv-c"><option value="doctor">ডাক্তার</option><option value="hospital">হাসপাতাল</option><option value="pharmacy">ফার্মেসি/ওষুধ</option><option value="ambulance">অ্যাম্বুলেন্স</option><option value="mistri">মিস্ত্রি/কারিগর</option><option value="labour">দিনমজুর</option><option value="krishi">কৃষি সেবা</option><option value="market">বাজার দর</option><option value="transport">পরিবহন</option><option value="courier">কুরিয়ার</option><option value="job">চাকরি ও নিয়োগ</option><option value="lost">হারানো-পাওয়া</option><option value="rent">বাড়ি ভাড়া</option><option value="edu">শিক্ষা ও আবেদন</option><option value="news">এলাকার খবর</option></select><label>নাম</label><input id="sv-n"><label>মোবাইল</label><input id="sv-p"><label>এলাকা</label><input id="sv-a"><button class="btn" onclick="addSvc()">যোগ করুন</button></div>
