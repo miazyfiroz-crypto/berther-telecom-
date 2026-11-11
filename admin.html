@@ -286,11 +286,11 @@ function profileCard(){
   const p=S.myProfile||{};
   const name=p.name||"ব্যবহারকারী";
   const av=p.photo?`<img src="${esc(p.photo)}" alt="" style="width:52px;height:52px;border-radius:50%;object-fit:cover">`:`<div class="avatar" style="width:52px;height:52px;font-size:22px">${esc(name.charAt(0)||"?")}</div>`;
-  return `<div class="card" style="display:flex;align-items:center;gap:12px">${av}<div style="flex:1"><div class="t" style="font-size:16px">${esc(name)}</div><div class="s">মোবাইল: ${esc(p.phone||"—")}</div></div><button class="btn sm g" onclick="S.tab='profile';render()">প্রোফাইল</button></div>`;
+  return `<div class="card" style="display:flex;align-items:center;gap:12px">${av}<div style="flex:1"><div class="t" style="font-size:16px">${esc(name)}</div><div class="s">মোবাইল: ${esc(myPhone(p))}</div></div><button class="btn sm g" onclick="S.tab='profile';render()">প্রোফাইল</button></div>`;
 }
 function profileEditCard(){
   const p=S.myProfile||{};
-  return `<div class="card"><div class="t" style="margin-bottom:6px">আমার প্রোফাইল</div><div class="s">মোবাইল: ${esc(p.phone||"—")}</div><label>আপনার নাম</label><input value="${esc(p.name||"")}" onchange="saveMyName(this.value)"></div>`;
+  return `<div class="card"><div class="t" style="margin-bottom:6px">আমার প্রোফাইল</div><div class="s">মোবাইল: ${esc(myPhone(p))}</div><label>আপনার নাম</label><input value="${esc(p.name||"")}" onchange="saveMyName(this.value)"></div>`;
 }
 async function saveMyName(v){
   const n=(v||"").trim();
@@ -338,7 +338,7 @@ function removeAd(id){ saveSettings({ads:(S.settings.ads||[]).filter(a=>a.id!==i
 function adsBanner(){
   const ads=S.settings.ads||[];
   if(!ads.length)return "";
-  return `<div style="display:flex;gap:10px;overflow-x:auto;margin-bottom:12px;padding-bottom:4px">${ads.map(a=>`<a href="${esc(a.link||'#')}" target="_blank" rel="noopener" style="flex:0 0 85%;text-decoration:none;color:#000;background:#fff;border-radius:14px;overflow:hidden;border:1px solid var(--line)"><img src="${esc(a.img)}" alt="" style="width:100%;height:150px;object-fit:cover;display:block"><div style="padding:8px 10px;font-size:13px;font-weight:600">${esc(a.text||"")}</div></a>`).join("")}</div>`;
+  return `<div style="display:flex;gap:10px;overflow-x:auto;margin-bottom:12px;padding-bottom:4px">${ads.map(a=>`<a href="${esc(a.link||'#')}" target="_blank" rel="noopener" style="flex:0 0 100%;text-decoration:none;color:#000;background:#fff;border-radius:14px;overflow:hidden;border:1px solid var(--line)"><img src="${esc(a.img)}" alt="" style="width:100%;height:auto;max-height:420px;object-fit:contain;display:block;background:#fff"><div style="padding:8px 10px;font-size:13px;font-weight:600">${esc(a.text||"")}</div></a>`).join("")}</div>`;
 }
 function profilePage(){
   const p=S.myProfile||{};
@@ -349,7 +349,7 @@ function profilePage(){
   const gender=`<label>লিঙ্গ</label><select id="pf-gender">${["পুরুষ","মহিলা","অন্যান্য"].map(o=>`<option ${o===(p.gender||"")?"selected":""}>${o}</option>`).join("")}</select>`;
   const body=E
     ? `<div class="card">${inp("আবেদনকারীর নাম","pf-name",p.name)}${inp("ইমেইল","pf-email",p.email,"email")}${gender}${inp("জন্মতারিখ","pf-dob",p.dob,"date")}${inp("বিভাগ / জেলা","pf-dept",p.dept)}<button class="btn" style="margin-top:12px" onclick="saveProfile()">সেভ করুন</button></div>`
-    : `${row("মোবাইল নাম্বার",p.phone)}${row("প্যাকেজ সাবস্ক্রাইবার",p.pkg||"Basic")}${row("আবেদনকারীর নাম",p.name)}${row("ইমেইল",p.email)}${row("লিঙ্গ",p.gender)}${row("জন্মতারিখ",p.dob)}${row("বিভাগ / জেলা",p.dept)}`;
+    : `${row("মোবাইল নাম্বার",myPhone(p))}${row("প্যাকেজ সাবস্ক্রাইবার",p.pkg||"Basic")}${row("আবেদনকারীর নাম",p.name)}${row("ইমেইল",p.email)}${row("লিঙ্গ",p.gender)}${row("জন্মতারিখ",p.dob)}${row("বিভাগ / জেলা",p.dept)}`;
   return `<div class="btns"><button class="btn sm g" onclick="S.tab='home';render()">← ফিরে যান</button><button class="btn sm" onclick="S.profEdit=!S.profEdit;render()">${E?"বাতিল":"সম্পাদনা"}</button></div>
     <div style="text-align:center;margin-bottom:14px">${av}${E?`<div style="margin-top:8px"><input type="file" accept="image/*" onchange="profPhotoChosen(this)"><input placeholder="অথবা ছবির লিংক (https://...)" onchange="profPhotoUrl(this.value)" style="margin-top:6px"></div>`:""}</div>
     ${body}`;
@@ -381,7 +381,7 @@ function svcCatName(k){const c=SERVICE_CATS.find(x=>x[0]===k);return c?c[1]:""}
 function homeGrid(){
   const tile=(icon,label,act)=>`<button onclick="${act}" style="background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 4px;cursor:pointer;color:#000;font-size:13px;font-weight:600;box-shadow:var(--shadow)"><div style="font-size:26px;margin-bottom:4px">${icon}</div>${label}</button>`;
   const row=(title,tiles)=>`<h2 style="margin-top:14px">${title}</h2><div class="svc">${tiles}</div>`;
-  return row("মূল সেবা", tile("📱","মোবাইল রিচার্জ","openW('recharge')")+tile("🎁","ড্রাইভ প্যাক","openOffers()")+tile("💵","ক্যাশ-ইন","openW('add')"))
+  return row("মূল সেবা", tile("📱","মোবাইল রিচার্জ","openW('recharge')")+tile("🎁","ড্রাইভ প্যাক","openOffers()")+tile("💵","অ্যাড মানি","openW('add')"))
     + row("দোকান ও বিল", tile("📒","বাকি খাতা","S.tab='dues';render()")+tile("💡","বিল পেমেন্ট","openW('bill')")+tile("🩸","ব্লাড ব্যাংক","S.tab='blood';render()"))
     + row("সেবা", tile("🌾","কৃষি সেবা","S.svcCat='krishi';S.tab='services';render()")+tile("🚑","অ্যাম্বুলেন্স","S.svcCat='ambulance';S.tab='services';render()")+tile("🔧","মিস্ত্রি/পরিবহন","S.svcCat='mistri';S.tab='services';render()"))
     + row("দোকান", tile("📦","পণ্য তালিকা","S.tab='products';render()")+tile("🧾","বিক্রি করুন","S.tab='products';render()")+tile("💸","খরচ লিখুন","openH('expense')"))
@@ -550,6 +550,14 @@ async function lockKey(k){
   }catch(e){ S.lockErr="PIN ভুল হয়েছে"; }
   render();
 }
+function myPhone(p){
+  if(p&&p.phone)return p.phone;
+  const e=AUTH&&AUTH.currentUser&&AUTH.currentUser.email;
+  return e?e.split("@")[0]:"—";
+}
+function sosCard(){
+  return `<div style="background:linear-gradient(135deg,#D50000,#9B0000);color:#fff;border-radius:20px;padding:16px;margin-bottom:12px;box-shadow:0 6px 18px rgba(213,0,0,.3)"><div style="font-size:13px;opacity:.9">জরুরি অবস্থা?</div><div style="font-size:20px;font-weight:800;margin:2px 0 10px">🚨 এক ট্যাপে জরুরি কল</div><div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:8px"><a href="tel:999" style="text-decoration:none;background:#fff;color:#D50000;border-radius:14px;padding:14px 6px;text-align:center;font-weight:800;font-size:22px">999<div style="font-size:11px;font-weight:600">জরুরি সেবা</div></a><a href="tel:333" style="text-decoration:none;background:rgba(255,255,255,.18);color:#fff;border-radius:14px;padding:12px 4px;text-align:center;font-weight:700;font-size:17px">333<div style="font-size:10px;font-weight:600">তথ্য ও সেবা</div></a><a href="tel:109" style="text-decoration:none;background:rgba(255,255,255,.18);color:#fff;border-radius:14px;padding:12px 4px;text-align:center;font-weight:700;font-size:17px">109<div style="font-size:10px;font-weight:600">নারী ও শিশু</div></a></div></div>`;
+}
 function logout(){ if(AUTH) AUTH.signOut(); }
 const DEF_SETTINGS={features:{wallet:true,transfer:true,recharge:true,bill:true},limits:{daily:50000,perTx:10000},maintenance:false,shopName:"",notice:{text:"",at:""}};
 async function seedSettings(){ try{ const s=await DB.doc("settings/main").get(); if(!s.exists) await DB.doc("settings/main").set(DEF_SETTINGS); }catch(e){ console.warn(e); } }
@@ -602,7 +610,7 @@ function pinModalView(){
 }
 function isReq(x){return x.type==="add"||x.type==="withdraw"||x.type==="recharge"||x.type==="drive"}
 function payInfo(m){
-  const key={"বিকাশ":"bkash","নগদ":"nagad","ব্যাংক":"bank"}[m];
+  const key={"বিকাশ":"bkash","নগদ":"nagad","রকেট":"rocket","ব্যাংক":"bank"}[m];
   if(!key)return "";
   const p=(S.settings.payment||{})[key]||{};
   if(!p.no&&!p.qr)return `<div class="muted" style="margin-top:8px">এডমিন এখনো ${m} নম্বর যোগ করেনি।</div>`;
@@ -1049,7 +1057,7 @@ const TABS={
   blood:()=>bloodPage(),
   products:()=>productsPage(),
   profile:()=>profilePage(),
-  home:()=>{const t=hisabTotals();return `${noticeTicker()}${profileCard()}${adsBanner()}${clockCard()}
+  home:()=>{const t=hisabTotals();return `${noticeTicker()}${sosCard()}${profileCard()}${adsBanner()}${clockCard()}
     <div class="card hero"><small>ওয়ালেট ব্যালেন্স</small><b>${taka(S.balance)}</b></div>
     <div class="mini4">
       <div class="card stat"><small>ক্যাশ ব্যালেন্স</small><b>${taka(t.cash)}</b></div>
@@ -1107,7 +1115,7 @@ function appRoot(){
   const head=S.tab==="home"?"ডিজিটাল হিসাব ও মোবাইল ওয়ালেট":TITLES[S.tab];
   const items=[["home","🏠","হোম"],["sales","🧾","হিসাব"],["services","🧰","সেবা"],["offers","🎁","অফার"],["profile","👤","প্রোফাইল"]];
   const nav=`<nav>${items.map(([k,i,l])=>`<button class="${S.tab===k?'on':''}" onclick="go('${k}')"><span>${i}</span><br>${l}</button>`).join("")}</nav>`;
-  return `<header><div style="display:flex;align-items:center;gap:12px"><img src="${LOGO}" alt="" style="width:46px;height:46px;object-fit:contain;border-radius:50%;background:#fff"><div><h1>${esc(S.settings.shopName||S.shop)} <span style="font-size:11px;background:#fff;color:#8E1B16;border-radius:99px;padding:2px 8px;vertical-align:middle">প্রিমিয়াম</span></h1><p>${head}</p></div></div></header><main>${S.settings.notice&&S.settings.notice.text?`<div class="card" style="border-left:4px solid var(--accent)"><b>📢 নোটিশ</b><div style="margin-top:4px">${esc(S.settings.notice.text||"")}</div>${S.settings.notice.img?`<img src="${esc(S.settings.notice.img)}" style="width:100%;border-radius:12px;margin-top:8px">`:""}</div>`:""}${S.dbNote?`<div class="card muted">${esc(S.dbNote)}</div>`:""}${body}</main>${nav}${S.modal?hisabModal():""}${S.wmodal?walletModal():""}`;
+  return `<header><div style="display:flex;align-items:center;gap:12px"><img src="${LOGO}" alt="" style="width:46px;height:46px;object-fit:contain;border-radius:50%;background:#fff"><div><h1>${esc(S.settings.shopName||S.shop)} <span style="font-size:11px;background:#fff;color:#8E1B16;border-radius:99px;padding:2px 8px;vertical-align:middle">প্রিমিয়াম</span></h1><p>${head}</p></div></div></header><main>${S.settings.notice&&S.settings.notice.text?`<div class="card" style="border-left:4px solid var(--accent)"><b>📢 নোটিশ</b><div style="margin-top:4px">${esc(S.settings.notice.text||"")}</div>${S.settings.notice.img?`<img src="${esc(S.settings.notice.img)}" style="width:100%;border-radius:12px;margin-top:8px">`:""}</div>`:""}${S.dbNote?`<div class="card muted">${esc(S.dbNote)}</div>`:""}${body}${devCard()}</main>${nav}${S.modal?hisabModal():""}${S.wmodal?walletModal():""}`;
 }
 function go(t){if(t==="offers"){openOffers();return}S.tab=t;render();window.scrollTo(0,0)}
 function openH(type,cust){S.modal=type;S.form={amount:"",note:"",cust:cust||""};render()}
@@ -1140,7 +1148,7 @@ function walletModal(){
     send:`<label>প্রাপকের ওয়ালেট নম্বর</label><input type="tel" value="${esc(f.to||"")}" oninput="S.wform.to=this.value">`,
     recharge:`<label>অপারেটর</label><select onchange="S.wform.op=this.value">${["গ্রামীণফোন","রবি","এয়ারটেল","বাংলালিংক"].map(o=>`<option ${o===(f.op||"গ্রামীণফোন")?'selected':''}>${o}</option>`).join("")}</select><label>মোবাইল নম্বর</label><input type="tel" value="${esc(f.to||"")}" oninput="S.wform.to=this.value">`,
     bill:`<label>বিলের ধরন</label><select onchange="S.wform.op=this.value">${["বিদ্যুৎ","গ্যাস","পানি","ইন্টারনেট"].map(o=>`<option ${o===(f.op||"বিদ্যুৎ")?'selected':''}>${o}</option>`).join("")}</select><label>গ্রাহক নম্বর</label><input value="${esc(f.to||"")}" oninput="S.wform.to=this.value">`,
-    add:`<label>মাধ্যম</label><select onchange="S.wform.method=this.value;render()">${["বিকাশ","নগদ","ব্যাংক","এজেন্ট"].map(o=>`<option ${o===m?'selected':''}>${o}</option>`).join("")}</select>${allPayInfo()}<label>${m==="ব্যাংক"?"ট্রান্সফার রেফারেন্স":"আপনার "+m+" নম্বর / TrxID"}</label><input value="${esc(f.to||"")}" oninput="S.wform.to=this.value">`,
+    add:`<label>মাধ্যম বেছে নিন</label><div class="types">${["বিকাশ","নগদ","রকেট","ব্যাংক"].map(o=>`<button class="${m===o?'on':''}" onclick="S.wform.method='${o}';render()">${o}</button>`).join("")}</div>${payInfo(m)}<label>${m==="ব্যাংক"?"ট্রান্সফার রেফারেন্স":"আপনার "+m+" নম্বর / TrxID"}</label><input value="${esc(f.to||"")}" oninput="S.wform.to=this.value">`,
     withdraw:`<label>কোথায় পাঠাবেন</label><select onchange="S.wform.method=this.value">${["বিকাশ","নগদ","ব্যাংক"].map(o=>`<option ${o===m?'selected':''}>${o}</option>`).join("")}</select><label>নম্বর / অ্যাকাউন্ট</label><input value="${esc(f.to||"")}" oninput="S.wform.to=this.value">`
   }[k]||"";
   const title={send:"ট্রান্সফার",recharge:"মোবাইল রিচার্জ",bill:"বিল পেমেন্ট",add:"অ্যাড মানি রিকুয়েস্ট",withdraw:"উইথড্র রিকুয়েস্ট"}[k];
