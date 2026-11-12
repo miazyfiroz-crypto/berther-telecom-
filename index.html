@@ -999,7 +999,7 @@ function offersModal(){
   const opSec=isGame?"":`<label>অপারেটর বেছে নিন</label><div class="opgrid">${opBtns}</div>`;
   return `<div class="modal c" onclick="if(event.target===this){S.omodal=false;render()}"><div class="sheet">
     <h3>অফার</h3>
-    <div class="tabs">${tabBtn("drive","ড্রাইভ")}${tabBtn("regular","রেগুলার প্যাক")}${tabBtn("game","🎮 ফ্রি ফায়ার")}</div>
+    <div class="tabs">${tabBtn("drive","ড্রাইভ")}${tabBtn("regular","রেগুলার প্যাক")}</div>
     ${input}${opSec}
     <div class="chips">${catBtns}</div>
     <div style="margin-top:8px">${cards}</div>
